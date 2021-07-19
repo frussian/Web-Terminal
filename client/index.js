@@ -59,5 +59,5 @@ const reqMonitorBuffer = async () => {
     elem.innerHTML = body;
 };
 
-setInterval(reqMonitorBuffer, 1000);
-// reqMonitorBuffer();
+// setInterval(reqMonitorBuffer, 1000);
+reqMonitorBuffer();

@@ -109,16 +109,15 @@ int readTerminal(struct tty *pt) {
     size_t size = 256, sum = 0;
     char *data = malloc(size);
     while (1) {
-        int i = read(pt->master, data, size - sum);  //it's blocking
+        int i = read(pt->master, data + sum, size - sum);
         fprintf(stderr, "read %d bytes from terminal\n", i);
         if (i < 0) {
-            fprintf(stderr, "read from terminal: %d\n", i);
             break;
         }
         sum += i;
         if (sum >= size) {
             size *= 2;
-            data = realloc(data, size);
+            data = realloc(data, size);     //TODO: use append?
         }
     }
 
@@ -163,6 +162,9 @@ char *getHTML(struct tty pt, int *len) {
                 sum += 7;
                 break;
             default:
+                if (pt.buf[i] == 0) {
+                    fprintf(stderr, "found 0 in pt.buf\n");
+                }
                 html = append(html, sum, &pt.buf[i], 1);
                 sum++;
                 break;
@@ -176,6 +178,10 @@ char *getHTML(struct tty pt, int *len) {
     }
 
     html = realloc(html, sum + 1);
+    if (html == NULL) {
+        fprintf(stderr, "html: realloc returned null\n");
+        return NULL;
+    }
     html[sum] = 0;
 
     if (len) *len = sum;

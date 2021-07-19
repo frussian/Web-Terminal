@@ -4,7 +4,9 @@
 
 #include "server/httpd.h"
 #include "tty/tty.h"
-static struct tty pt;
+
+static struct tty pt; //create shared memory for this
+
 int main(int c, char** v) {
     pt = startTerminal();
     if (pt.master < 0) return 1;
@@ -20,15 +22,23 @@ int route() {
     ROUTE_START()
 
     GET("/") {
-        httpCode(200);
         readTerminal(&pt);  //move to getHTML()?
         int len = 0;
         char *html = getHTML(pt, &len);
-        fprintf(stderr, "got html\n");
-        char lenstr[16];
-        int i = sprintf(lenstr, "%d", len);
-        lenstr[i] = 0;
-        writeHeader("Content-Length", lenstr);
+        if (html == NULL) {
+            fprintf(stderr, "html is null\n");
+            httpCode(500);
+            return KEEP_CONN;
+        } else {
+            fprintf(stderr, "got html\n");
+            char lenstr[16];
+            int i = sprintf(lenstr, "%d", len);
+            lenstr[i] = 0;
+            fprintf(stderr, "%s %lu\n", lenstr, strlen(html));
+
+            httpCode(200);
+            writeHeader("Content-Length", lenstr);
+        }
 
         if (headerIsPresent("Origin")) {
             fprintf(stderr, "Origin is present\n");
@@ -55,6 +65,7 @@ int route() {
             } else {
                 writeTerminal(payload, payload_size, pt);
             }
+
             httpCode(200);
 
             if (headerIsPresent("Origin")) {
@@ -92,5 +103,3 @@ int route() {
 
     return KEEP_CONN;
 }
-
-//fork, dup, posixopenpt,

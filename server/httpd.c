@@ -251,13 +251,21 @@ void respond(int n) {
 //TODO: make one to use this only for body
 int writeConn(const char *data, ...) {
     va_list args;
-    char buffer[strlen(data) + 64];
+    size_t len2 = strlen(data);
+    char buffer[len2 + 64];
+    char *wrbuf = buffer;
     va_start(args, data);
-    int len = vsnprintf(buffer, sizeof(buffer), data, args);
+    fprintf(stderr, "sizeof = %lu", sizeof(buffer));
+    int len = vsprintf(buffer, data, args);
+    fprintf(stderr, "strlen in writeConn: %d, strlen = %lu\n", len, len2);
     va_end(args);
+    if (len < 0) {
+        wrbuf = data;
+        len = len2;
+    }
     int sum = 0;
     while (len > 0) {
-        int i = send(clients[slot], buffer + sum, len - sum, 0);
+        int i = send(clients[slot], wrbuf + sum, len - sum, 0);
         if (i < 1) return -1;
         sum += i;
         len -= i;
