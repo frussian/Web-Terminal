@@ -1,0 +1,3 @@
+GET / HTTP1.1
+Host: www.refal.net
+Connection: close
