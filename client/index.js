@@ -1,6 +1,6 @@
 'use strict';
 
-const sendRequest = (method, body = null) => {
+const sendRequest = async (method, body = null) => {
     const response = fetch('http://localhost:3018', {
         method: method,
         mode: 'cors',
@@ -11,8 +11,10 @@ const sendRequest = (method, body = null) => {
         },
         body: body
     });
-    response.then(value => value.text())
-        .then(text => console.log(text))
+    return await response.then(value => value.text())
+        .then(text => {
+            return text;
+        })
         .catch(err => console.log(err));
 };
 
@@ -21,14 +23,14 @@ const keyDownHandler = (e) => {
     e.preventDefault();
     const alphanumeric = /^[\p{sc=Latn}\p{sc=Cyrillic}\p{Nd}]+$/u;
 
-    if (e.key === "Shift" && e.key === "Alt" &&
-        e.key === "Control" && e.key === "CapsLock" &&
+    if (e.key === "Shift" || e.key === "Alt" ||
+        e.key === "Control" || e.key === "CapsLock" ||
         e.key === "Insert") {
         return;
     }
 
     if (e.ctrlKey && e.key >= 'a' && e.key <= 'z') {
-        let code = e.key.charCodeAt(0) - 0x40;
+        let code = e.key.charCodeAt(0) - 0x20 - 0x40;
         let char = String.fromCharCode(code);
         sendRequest("POST", char);
     } else if (e.key === "Backspace") {
@@ -36,7 +38,7 @@ const keyDownHandler = (e) => {
     } else if (e.key === "Tab") {
         sendRequest("POST", "\t");
     } else if (e.key === "Enter") {
-        sendRequest("POST", "\n");
+        sendRequest("POST", "newline");
     } else if (e.key === "Escape") {
         sendRequest("POST", "\x1b");
     } else if (e.key === "Home") {
@@ -50,3 +52,12 @@ const keyDownHandler = (e) => {
 };
 
 document.addEventListener("keydown", keyDownHandler);
+
+const reqMonitorBuffer = async () => {
+    const body = await sendRequest("GET");
+    let elem = document.getElementById("monitor_buffer");
+    elem.innerHTML = body;
+};
+
+setInterval(reqMonitorBuffer, 1000);
+// reqMonitorBuffer();

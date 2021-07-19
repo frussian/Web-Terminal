@@ -3,8 +3,12 @@
 //
 
 #include "server/httpd.h"
-
+#include "tty/tty.h"
+static struct tty pt;
 int main(int c, char** v) {
+    pt = startTerminal();
+    if (pt.master < 0) return 1;
+
     serve_forever("3018");
     return 0;
 }
@@ -17,24 +21,23 @@ int route() {
 
     GET("/") {
         httpCode(200);
+        readTerminal(&pt);  //move to getHTML()?
+        int len = 0;
+        char *html = getHTML(pt, &len);
+        fprintf(stderr, "got html\n");
+        char lenstr[16];
+        int i = sprintf(lenstr, "%d", len);
+        lenstr[i] = 0;
+        writeHeader("Content-Length", lenstr);
 
-        char data[256];
-        int contentLen = sprintf(data, "Hello! You are using %s", request_header("User-Agent"));
-        data[contentLen] = 0;
-
-        char contentLenStr[6];
-        int n = sprintf(contentLenStr, "%d", contentLen);
-        contentLenStr[n] = 0;
-        writeHeader("Content-Length", contentLenStr);
-
-        if (request_header("Origin") != NULL) {
+        if (headerIsPresent("Origin")) {
             fprintf(stderr, "Origin is present\n");
             writeHeader("Access-Control-Allow-Origin", "*");  //TODO: change it to one domain
         }
 
         writeConn("\r\n");
 
-        writeConn(data);
+        writeConn(html);
     }
 
     GET("/test") {
@@ -46,15 +49,34 @@ int route() {
     }
 
     POST("/") {
-        httpCode(200);
-        writeHeader("Content-Length", "2");
-        if (request_header("Origin") != NULL) {
-            fprintf(stderr, "Origin is present\n");
-            writeHeader("Access-Control-Allow-Origin", "*");  //TODO: change it to one domain
+        if (payload != NULL) {
+            if (strcmp("newline", payload) == 0) {
+                writeTerminal("\n", 1, pt);
+            } else {
+                writeTerminal(payload, payload_size, pt);
+            }
+            httpCode(200);
+
+            if (headerIsPresent("Origin")) {
+                fprintf(stderr, "Origin is present\n");
+                writeHeader("Access-Control-Allow-Origin", "*");  //TODO: change it to one domain
+            }
+            writeHeader("Content-Length", "2");
+            writeConn("\r\n");
+            writeConn("ok");
+        } else {
+            httpCode(400);
+            writeHeader("Content-Length", "12");
+
+            if (headerIsPresent("Origin")) {
+                fprintf(stderr, "Origin is present\n");
+                writeHeader("Access-Control-Allow-Origin", "*");  //TODO: change it to one domain
+            }
+
+            writeConn("\r\n");
+            writeConn("invalid data");
         }
-        writeConn("\r\n");
-        writeConn("32");
-//        return CLOSE_CONN;
+
     }
 
     OPTIONS("/") {
@@ -70,3 +92,5 @@ int route() {
 
     return KEEP_CONN;
 }
+
+//fork, dup, posixopenpt,

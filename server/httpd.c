@@ -40,7 +40,7 @@ void serve_forever(const char *PORT) {
            "\033[0m");
 
     // create shared memory for client slot array
-    clients = mmap(NULL, sizeof(int) * MAX_CONNECTIONS,
+    clients = mmap(NULL, sizeof(*clients) * MAX_CONNECTIONS,
                    PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_SHARED, -1, 0);
 
     // Setting all elements to -1: signifies there is no client connected
@@ -123,6 +123,16 @@ char *request_header(const char *name) {
         h++;
     }
     return NULL;
+}
+
+char headerIsPresent(const char *name) {
+    header_t *h = reqhdr;
+    while (h->name) {
+        if (strcmp(h->name, name) == 0) return 1;
+        h++;
+    }
+
+    return 0;
 }
 
 // get all request headers
@@ -210,7 +220,7 @@ void respond(int n) {
                 h->name = key;
                 h->value = val;
                 h++;
-                fprintf(stderr, "[H] %s: %s\n", key, val);
+//                fprintf(stderr, "[H] %s: %s\n", key, val);
                 t = val + 1 + strlen(val);
                 if (t[1] == '\r' && t[2] == '\n') break;
             }
@@ -219,12 +229,17 @@ void respond(int n) {
             t2 = request_header("Content-Length"); // and the related header if there is
             payload = t;
             payload_size = t2 ? atol(t2) : (rcvd - (t - buf));
-            fprintf(stderr, "%s\n", payload);
+            if (payload != NULL) {
+                fprintf(stderr, "string: %s\n", payload);
+                fprintf(stderr, "code: %d\n", *payload);
+                fprintf(stderr, "payload_size = %d\n", payload_size);
+            } else {
+                fprintf(stderr, "body is empty\n");
+            }
 
             connection = request_header("Connection");
 
             int closeConn = route();
-            fprintf(stderr, "finished routing\n");
             if (closeConn == CLOSE_CONN) break;
         }
     } while (connection && strcmp("keep-alive", connection) == 0);

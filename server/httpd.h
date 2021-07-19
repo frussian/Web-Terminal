@@ -18,6 +18,8 @@ void serve_forever(const char *PORT);
 
 char *request_header(const char *name);
 
+char headerIsPresent(const char *name);
+
 int writeHeader(const char *k, const char *v);
 
 int writeConn(const char *data, ...);
