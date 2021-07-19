@@ -30,32 +30,22 @@ int route() {
             httpCode(500);
             return KEEP_CONN;
         } else {
-            fprintf(stderr, "got html\n");
+//            fprintf(stderr, "got html\n");
             char lenstr[16];
             int i = sprintf(lenstr, "%d", len);
             lenstr[i] = 0;
-            fprintf(stderr, "%s %lu\n", lenstr, strlen(html));
 
             httpCode(200);
             writeHeader("Content-Length", lenstr);
         }
 
         if (headerIsPresent("Origin")) {
-            fprintf(stderr, "Origin is present\n");
             writeHeader("Access-Control-Allow-Origin", "*");  //TODO: change it to one domain
         }
 
         writeConn("\r\n");
 
         writeConn(html);
-    }
-
-    GET("/test") {
-        httpCode(200);
-        writeHeader("Connection", "close");
-        writeConn("\r\n");
-        writeConn("Hello!");
-        return CLOSE_CONN;
     }
 
     POST("/") {
@@ -69,18 +59,18 @@ int route() {
             httpCode(200);
 
             if (headerIsPresent("Origin")) {
-                fprintf(stderr, "Origin is present\n");
                 writeHeader("Access-Control-Allow-Origin", "*");  //TODO: change it to one domain
             }
+
             writeHeader("Content-Length", "2");
             writeConn("\r\n");
+
             writeConn("ok");
         } else {
             httpCode(400);
             writeHeader("Content-Length", "12");
 
             if (headerIsPresent("Origin")) {
-                fprintf(stderr, "Origin is present\n");
                 writeHeader("Access-Control-Allow-Origin", "*");  //TODO: change it to one domain
             }
 

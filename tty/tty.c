@@ -135,7 +135,7 @@ int readTerminal(struct tty *pt) {
     // do not add to header
 
     free(data);
-    fprintf(stderr, "read success, pt->size = %zu\n", pt->size);
+//    fprintf(stderr, "read success, pt->size = %zu\n", pt->size);
     return 0;
 }
 
@@ -144,7 +144,7 @@ char *getBuf(struct tty pt) {
 }
 
 char *getHTML(struct tty pt, int *len) {
-    fprintf(stderr, "getting html\n");
+//    fprintf(stderr, "getting html\n");
     char *html = NULL;
     int sum = 0;
     int i = 0;
@@ -154,7 +154,7 @@ char *getHTML(struct tty pt, int *len) {
         return NULL;
     }
     sum += 3;
-    fprintf(stderr, "pt.size = %zu\n", pt.size);
+
     while (i < pt.size) {
         switch (pt.buf[i]) {
             case '\n':

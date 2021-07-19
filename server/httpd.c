@@ -255,14 +255,15 @@ int writeConn(const char *data, ...) {
     char buffer[len2 + 64];
     char *wrbuf = buffer;
     va_start(args, data);
-    fprintf(stderr, "sizeof = %lu", sizeof(buffer));
     int len = vsprintf(buffer, data, args);
-    fprintf(stderr, "strlen in writeConn: %d, strlen = %lu\n", len, len2);
+//    fprintf(stderr, "strlen in writeConn: %d, strlen = %lu\n", len, len2);
     va_end(args);
-    if (len < 0) {
+
+    if (len != len2) {
         wrbuf = data;
         len = len2;
     }
+
     int sum = 0;
     while (len > 0) {
         int i = send(clients[slot], wrbuf + sum, len - sum, 0);
