@@ -49,6 +49,8 @@ const keyDownHandler = (e) => {
         sendRequest("POST", "\x1b[1~");
     } else if (e.key === "ArrowLeft") {
         sendRequest("POST", "\x1b[D");
+    } else if (e.key === "ArrowRight") {
+
     }
     else {
         sendRequest("POST", e.key);

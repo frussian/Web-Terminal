@@ -13,8 +13,7 @@ struct tty {
 
 struct tty startTerminal();
 int writeTerminal(char*, size_t, struct tty);
-int readTerminal(struct tty *);
 char *getBuf(struct tty);
-char *getHTML(struct tty, int *);
+char *getHTML(struct tty *, int *);
 
 #endif //WEBTERMINAL_TTY_H

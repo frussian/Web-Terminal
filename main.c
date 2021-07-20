@@ -22,9 +22,8 @@ int route() {
     ROUTE_START()
 
     GET("/") {
-        readTerminal(&pt);  //move to getHTML()?
         int len = 0;
-        char *html = getHTML(pt, &len);
+        char *html = getHTML(&pt, &len);
         if (html == NULL) {
             fprintf(stderr, "html is null\n");
             httpCode(500);
