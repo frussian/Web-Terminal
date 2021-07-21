@@ -7,7 +7,7 @@ const sendRequest = async (method, body = null) => {
         cache: "no-cache",
         credentials: "omit",
         headers: {
-            "Content-Type": "text/plain"
+            "Content-Type": "text/plain;charset=UTF-8"
         },
         body: body
     });

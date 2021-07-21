@@ -177,7 +177,7 @@ void respond(int n) {
     int clientfd = clients[n];
     slot = n;
     do {
-        fprintf(stderr, "waiting on receive\n");
+//        fprintf(stderr, "waiting on receive\n");
         rcvd = recv(clientfd, buf, BUF_SIZE, 0);
 
         if (rcvd < 0) {   // receive error
@@ -195,10 +195,10 @@ void respond(int n) {
 
             uri_unescape(uri);
 
-            fprintf(stderr, "\x1b[32m + [%s] %s\x1b[0m\n", method, uri);
+//            fprintf(stderr, "\x1b[32m + [%s] %s\x1b[0m\n", method, uri);
 
             qs = strchr(uri, '?');
-
+            //-bash: привет: command not found 28+12, 7 + 12 + 19 + 1?
             if (qs) {
                 *qs++ = '\0'; // split URI
             }
@@ -234,7 +234,7 @@ void respond(int n) {
                 fprintf(stderr, "code: %d\n", *payload);
                 fprintf(stderr, "payload_size = %d\n", payload_size);
             } else {
-                fprintf(stderr, "body is empty\n");
+//                fprintf(stderr, "body is empty\n");
             }
 
             connection = request_header("Connection");

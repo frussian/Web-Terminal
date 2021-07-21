@@ -36,6 +36,7 @@ int route() {
 
             httpCode(200);
             writeHeader("Content-Length", lenstr);
+            writeHeader("Content-Type", "text/html; charset=utf-8");
         }
 
         if (headerIsPresent("Origin")) {

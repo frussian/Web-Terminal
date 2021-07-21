@@ -30,6 +30,7 @@ struct tty startTerminal() {
     pt.master = master;
     pt.buf = NULL;
     pt.size = 0;
+    pt.rawStart = 0;
 
     int flags = fcntl(master, F_GETFL, 0);
     if (flags == -1) {
@@ -70,7 +71,7 @@ struct tty startTerminal() {
         rc = tcgetattr(slave, &terminalCfg);
 //        cfmakeraw(&terminalCfg);
         terminalCfg.c_lflag &= ~ECHOCTL;
-        terminalCfg.c_lflag |= ECHOE;
+        terminalCfg.c_lflag |= ECHOE;   //TODO: might be the reason for ]K when delete on ubuntu vt
         tcsetattr(slave, TCSANOW, &terminalCfg);
 
         close(STDIN_FILENO);
@@ -109,7 +110,7 @@ int readTerminal(struct tty *pt) {
     while (1) {
         int i = read(pt->master, data + sum, size - sum);
         fprintf(stderr, "read %d bytes from terminal\n", i);
-        if (i < 0) {
+        if (i <= 0) {
             break;
         }
         sum += i;
@@ -119,6 +120,7 @@ int readTerminal(struct tty *pt) {
         }
     }
 
+//    fprintf(stderr, "sum = %zu\n", sum);
     if (sum != 0) {
         data = realloc(data, sum);
         if (data == NULL) {
@@ -127,7 +129,12 @@ int readTerminal(struct tty *pt) {
         }
 
         pt->buf = append(pt->buf, pt->size, data, sum);
+        pt->rawStart = pt->size;
         pt->size += sum;
+//        write(STDERR_FILENO, data, sum);
+        //TODO: changed = true
+    } else {
+        //TODO: changed = false => send 'no changes' to client
     }
     //TODO: parseTerminal to remove some characters if esc seq is present,
     // do not add to header
