@@ -11,8 +11,10 @@ struct tty {
     int master;
     char *buf;
     size_t size;
+    char changed;
     int rawStart;
     struct character *chars;
+    size_t charSize;
 };
 
 struct tty startTerminal();

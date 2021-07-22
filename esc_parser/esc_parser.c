@@ -5,22 +5,111 @@
 #include <stdio.h>
 #include <string.h>
 #include "esc_parser.h"
+#include "../tty/tty.h"
 
-struct esc parseEsc(const char *, size_t, int *);
+//struct esc parseEsc(const char *, size_t, int *);
+
+void clearStyle(struct style *s) {
+    s->underline = 0;
+    s->italic = 0;
+    s->fColor = NULL;
+    s->bold = 0;
+    s->bColor = NULL;
+}
+
+int styleIsEmpty(struct style *s) {
+    return !s->underline && !s->italic && !s->fColor &&
+           !s->bold && !s->bColor;
+}
+
+int styleEqual(struct style *s1, struct style *s2) {
+    return s1->underline == s2->underline &&
+           s1->italic == s2->italic &&
+           s1->bold == s2->bold &&
+           s1->fColor == s2->fColor && //|| strcmp(s1->fColor, s2->fColor) == 0) &&  //TODO: check this
+           s1->bColor == s2->bColor;//|| strcmp(s1->bColor, s2->bColor) == 0);
+
+}
+
+struct character *appendChars(const struct character *s1, int len1, const struct character *s2, int len2) {
+    struct character *new = realloc(s1, sizeof(struct character) * (len1 + len2));
+    if (new == NULL) return NULL;
+
+    memcpy((new + len1), s2, sizeof(struct character) * len2);
+    return new;
+}
 
 int parseTerminal(struct tty *pt) {
+    fprintf(stderr, "%p %p size = %zu parsing terminal\n", (void*)pt, pt->buf, pt->size);
     char *buf = pt->buf;
     int i = pt->rawStart;
     size_t size = pt->size;
 
+    struct style currentStyle;
+    clearStyle(&currentStyle);
+
+    size_t charsSize = 256;
+    int charsNum = 0;
+    struct character *chars = (struct character*) malloc(charsSize * sizeof(struct character));
+    if (chars == NULL) {
+        fprintf(stderr, "chars malloc error\n");
+        return -1;
+    }
 
     while (i < size) {
+        fprintf(stderr, "%d\n", i);
         if (buf[i] == '\x1b' && i + 1 < size && buf[i+1] == '[') {
             i += 2;
             struct esc res = parseEsc(buf + i, size - i, &i);
 
+            fprintf(stderr, "\x1b[32mparsing escape-seq: %d\x1b[0m\n", res.code);
+
+            switch (res.code) {
+                case ERROR:
+                    fprintf(stderr, "internal parser error\n");
+                    break;
+                case NOT_SUPPORTED:
+                    fprintf(stderr, "unsupported escape sequence\n");
+                    break;
+                case STYLE:
+                    currentStyle = res.s;
+                    break;
+                case RESET_STYLE:
+                    clearStyle(&currentStyle);
+                    break;
+            }
+        } else {
+            fprintf(stderr, "parsing character\n");
+            struct character c;
+            memcpy(c.c, &buf[i], 1);
+            c.size = 1;
+            c.s = currentStyle;
+            chars[charsNum++] = c;
+
+            if (charsNum >= charsSize) {
+                charsSize *= 2;
+                chars = realloc(chars, charsSize * sizeof(struct character));
+            }
+
+            i++;
         }
     }
+
+    fprintf(stderr, "parsed %d\n", charsNum);
+
+    if (charsNum != 0) {
+        pt->chars = appendChars(pt->chars, pt->charSize, chars, charsNum);
+        if (pt->chars == NULL) {
+            fprintf(stderr, "append chars error\n");
+            return -1;
+        }
+
+        pt->charSize += charsNum;//213 zeros, read 151 + 1 + 4; after newline + 256 + 82
+        pt->rawStart = size; //TODO: check this
+    }
+
+    free(chars);
+    return 0;
 }
 
 struct esc parseEsc(const char *buf, size_t maxsize, int *i) {
@@ -36,6 +125,8 @@ struct esc parseEsc(const char *buf, size_t maxsize, int *i) {
     res.cursor.column = 0;
     res.cursor.line = 0;
     int flag = 0;
+
+    if (maxsize <= 0) return res;
 
     short maxDigits = 6;
     short maxDigitLen = 10;
@@ -319,9 +410,6 @@ struct esc parseEsc(const char *buf, size_t maxsize, int *i) {
         }
 
         if (flag) break;
-    }
-    if (res.code == NOT_SUPPORTED) {
-        fprintf(stderr, "unsupported escape sequence\n");
     }
 
     if (i) *i += j;

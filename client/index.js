@@ -62,6 +62,7 @@ document.addEventListener("keydown", keyDownHandler);
 const reqMonitorBuffer = async () => {
     const body = await sendRequest("GET");
     let elem = document.getElementById("monitor_buffer");
+    if (body === "no changes") return;
     elem.innerHTML = body;
 };
 

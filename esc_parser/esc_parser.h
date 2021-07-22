@@ -42,8 +42,8 @@ struct moveCursor {
 };
 
 struct character {
-    char *c;
-    size_t size;
+    char c[2];
+    size_t size;    //TODO: for utf
     struct style s;
 };
 
@@ -54,7 +54,10 @@ struct esc {
 };
 
 
-int parseTerminal(struct tty *);
+int parseTerminal(struct tty *pt);
+void clearStyle(struct style *s);
+int styleIsEmpty(struct style *s);
+int styleEqual(struct style *s1, struct style *s2);
 struct esc parseEsc(const char *buf, size_t maxsize, int *i);   //TODO: remove from header
 
 #endif //WEBTERMINAL_ESC_PARSER_H
