@@ -224,6 +224,8 @@ char *getHTML(struct tty *pt, int *len) {
 
     readTerminal(pt);
 
+    write(STDERR_FILENO, pt->buf, pt->size);
+
     if (!pt->changed) {
         *len = 10;
         return "no changes";

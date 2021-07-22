@@ -4,7 +4,7 @@
 
 #include <stdio.h>
 #include <string.h>
-#import <unistd.h>
+#include <unistd.h>
 #include "esc_parser.h"
 #include "../tty/tty.h"
 
