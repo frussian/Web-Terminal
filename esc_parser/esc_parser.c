@@ -4,6 +4,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#import <unistd.h>
 #include "esc_parser.h"
 #include "../tty/tty.h"
 
@@ -79,7 +80,7 @@ int parseTerminal(struct tty *pt) {
                     break;
             }
         } else {
-            fprintf(stderr, "parsing character\n");
+//            fprintf(stderr, "parsing character\n");
             struct character c;
             memcpy(c.c, &buf[i], 1);
             c.size = 1;
@@ -104,8 +105,8 @@ int parseTerminal(struct tty *pt) {
             return -1;
         }
 
-        pt->charSize += charsNum;//213 zeros, read 151 + 1 + 4; after newline + 256 + 82
-        pt->rawStart = size; //TODO: check this
+        pt->charSize += charsNum;
+        pt->rawStart = size;
     }
 
     free(chars);
@@ -159,7 +160,11 @@ struct esc parseEsc(const char *buf, size_t maxsize, int *i) {
                 } else if (buf[j] == 'K') {
                     res.code = CLEAR_CUR_TO_END_OF_LINE;
                     flag = 1;
-                } else {
+                } else if (buf[j] == '6' && j + 1 < maxsize && buf[j+1] == 'n') {
+                    res.code = REQ_CURSOR;
+                    j++;
+                    flag = 1;
+                }else {
                     state = 1;  //for move cursor without parameters
                     break;
                 }
@@ -168,9 +173,8 @@ struct esc parseEsc(const char *buf, size_t maxsize, int *i) {
                 break;
 
             case 1:  //digits: cursor position || erase functions || colors
-                fprintf(stderr, "parsing case 1, buf[j] %c\n", buf[j]);
+//                fprintf(stderr, "parsing case 1, buf[j] %c\n", buf[j]);
                 if (buf[j] >= '0' && buf[j] <= '9') {
-                    fprintf(stderr, "parsing digit\n");
                     if (digitsNum >= 6) {
                         fprintf(stderr, "error: digitsNum >= 6\n");
                     }
@@ -187,7 +191,6 @@ struct esc parseEsc(const char *buf, size_t maxsize, int *i) {
                     digitsNum++;
                     currentDigitPos = 0;
                 } else {
-                    fprintf(stderr, "parsing else\n");
                     if (currentDigitPos != 0) {
                         digits[digitsNum][currentDigitPos] = 0;
                         digitsNum++;
@@ -322,10 +325,15 @@ struct esc parseEsc(const char *buf, size_t maxsize, int *i) {
                                 break;
                             }
 
+                            if (digitsNum == 0) {
+                                res.code = RESET_STYLE;
+                                flag = 1;
+                                break;
+                            }
+
                             for (int n = 0; n < digitsNum; n++) {
                                 if (strcmp(digits[n], "0") == 0) {
-                                    res.code = RESET_STYLE;
-                                    break;
+                                    res.code = RESET_STYLE;         //TODO: allow more modes after 0
                                 } else if (strcmp(digits[n], "1") == 0) {
                                     res.code = STYLE;
                                     res.s.bold = 1;
@@ -389,7 +397,7 @@ struct esc parseEsc(const char *buf, size_t maxsize, int *i) {
                             flag = 1;
                             break;
                         default:
-                            res.code = ERROR;
+                            res.code = ERROR;   //TODO: unsupported?
                             flag = 1;
                             break;
                     }
@@ -411,6 +419,11 @@ struct esc parseEsc(const char *buf, size_t maxsize, int *i) {
 
         if (flag) break;
     }
+
+    write(STDERR_FILENO, "\x1b[1;35m", 7);
+    write(STDERR_FILENO, buf, j);
+    write(STDERR_FILENO, "\n", 1);
+    write(STDERR_FILENO, "\x1b[0m", 4);
 
     if (i) *i += j;
 

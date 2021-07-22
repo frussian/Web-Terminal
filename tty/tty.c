@@ -106,11 +106,15 @@ int writeTerminal(char *data, size_t len, struct tty pt) {
     return write(pt.master, data, len);
 }
 
+int checkZeros(char *buf, size_t size) {
+
+}
+
 int readTerminal(struct tty *pt) {
     size_t size = 256, sum = 0;
     char *data = malloc(size);
     while (1) {
-        int i = read(pt->master, data + sum, size - sum);
+        int i = read(pt->master, data + sum, size - sum);   //TODO: wsl bug redundant zeros
         fprintf(stderr, "read %d bytes from terminal\n", i);
         if (i <= 0) {
             break;
