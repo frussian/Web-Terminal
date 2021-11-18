@@ -21,7 +21,7 @@ struct tty startTerminal() {
     struct tty pt;
     int master = posix_openpt(O_RDWR); //TODO: set O_NOCTTY?
     if (master < 0) {
-        fprintf(stderr, "error %d on posix_openpt()", errno);
+        fprintf(stderr, "error %d on posix_openpt()\n", errno);
         pt.master = master;
         return pt;
     }
@@ -65,7 +65,9 @@ struct tty startTerminal() {
     }
 
     if (!fork()) {
-        int slave = open(ptsname(master), O_RDWR);
+        char *name = ptsname(master);
+        fprintf(stderr, "%s\n", name);
+        int slave = open(name, O_RDWR);
         close(master);
 
         struct termios terminalCfg;

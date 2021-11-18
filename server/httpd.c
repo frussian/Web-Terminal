@@ -60,7 +60,7 @@ void serve_forever(const char *PORT) {
             perror("accept() error");
             exit(1);
         } else {
-            fprintf(stderr, "\x1b[32m new connection, slot: %d, %s:%d\x1b[0m\n", slot, inet_ntoa(((struct sockaddr_in)clientaddr).sin_addr), clientaddr.sin_port);
+            fprintf(stderr, "\x1b[32mnew connection, slot: %d, %s:%d\x1b[0m\n", slot, inet_ntoa(((struct sockaddr_in)clientaddr).sin_addr), clientaddr.sin_port);
             if (fork() == 0) {
                 close(listenfd);
                 respond(slot);

@@ -2,15 +2,19 @@
 // Created by Anton on 07.07.2021.
 //
 
+#include <fcntl.h>
+#include <unistd.h>
 #include "server/httpd.h"
 #include "tty/tty.h"
 
-static struct tty pt; //create shared memory for this
+static struct tty pt; //TODO: create shared memory for this
 
 int main(int c, char** v) {
     pt = startTerminal();
     if (pt.master < 0) return 1;
 
+    int fd = open("out.txt", O_WRONLY);
+    dup2(fd, STDERR_FILENO);
     serve_forever("3018");
     return 0;
 }
@@ -83,7 +87,9 @@ int route() {
     OPTIONS("/") {
         httpCode(200);
         writeHeader("Access-Control-Allow-Origin", "*");  //TODO: change it to one domain and add methods, headers
-//        writeHeader("")
+        writeHeader("Access-Control-Allow-Methods", "POST, GET, OPTIONS");
+        writeHeader("Access-Control-Allow-Headers", "Content-Type");
+        writeHeader("Access-Control-Max-Age", "86400");
         writeHeader("Connection", "keep-alive");
         writeHeader("Content-Length", "0");
         writeConn("\r\n");
