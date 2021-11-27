@@ -14,7 +14,53 @@
 #include <sys/ioctl.h>
 #include <string.h>
 
-#include <esc_parser.h>
+#include <tty.h>
+
+
+//https://stackoverflow.com/questions/1031645/how-to-detect-utf-8-in-plain-c
+#define UTF8_ACCEPT 0
+#define UTF8_REJECT 1
+
+static const uint8_t utf8d[] = {
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 00..1f
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 20..3f
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 40..5f
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 60..7f
+        1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9, // 80..9f
+        7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7, // a0..bf
+        8,8,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, // c0..df
+        0xa,0x3,0x3,0x3,0x3,0x3,0x3,0x3,0x3,0x3,0x3,0x3,0x3,0x4,0x3,0x3, // e0..ef
+        0xb,0x6,0x6,0x6,0x5,0x8,0x8,0x8,0x8,0x8,0x8,0x8,0x8,0x8,0x8,0x8, // f0..ff
+        0x0,0x1,0x2,0x3,0x5,0x8,0x7,0x1,0x1,0x1,0x4,0x6,0x1,0x1,0x1,0x1, // s0..s0
+        1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,0,1,0,1,1,1,1,1,1, // s1..s2
+        1,2,1,1,1,1,1,2,1,2,1,1,1,1,1,1,1,1,1,1,1,1,1,2,1,1,1,1,1,1,1,1, // s3..s4
+        1,2,1,1,1,1,1,1,1,2,1,1,1,1,1,1,1,1,1,1,1,1,1,3,1,3,1,1,1,1,1,1, // s5..s6
+        1,3,1,1,1,1,1,3,1,3,1,1,1,1,1,1,1,3,1,1,1,1,1,1,1,1,1,1,1,1,1,1, // s7..s8
+};
+
+uint32_t validate_utf8(uint32_t *state, char *str, size_t len) {
+    size_t i;
+    uint32_t type;
+
+    for (i = 0; i < len; i++) {
+        // We don't care about the codepoint, so this is
+        // a simplified version of the decode function.
+        type = utf8d[(uint8_t)str[i]];
+        *state = utf8d[256 + (*state) * 16 + type];
+
+        if (*state == UTF8_REJECT)
+            break;
+    }
+
+    return *state;
+}
+
+void clearChar(struct character *c) {
+    c->size = 0;
+    for (int i = 0; i < 4; i++) {
+        c->c[i] = 0;
+    }
+}
 
 struct tty startTerminal() {
     struct tty pt;
@@ -32,6 +78,12 @@ struct tty startTerminal() {
     pt.chars = NULL;
     pt.charSize = 0;
     pt.changed = 1;
+    pt.esc_seq = 0;
+
+    pt.utf8_state = UTF8_ACCEPT;
+    clearChar(&pt.current_char);
+
+    reinit_parser(&pt.pars);
 
     int flags = fcntl(master, F_GETFL, 0);
     if (flags == -1) {
@@ -111,6 +163,113 @@ int checkZeros(char *buf, size_t size) {
 
 }
 
+struct character *appendChars(const struct character *s1, int len1, const struct character *s2, int len2) {
+    struct character *new = realloc(s1, sizeof(struct character) * (len1 + len2));
+    if (new == NULL) return NULL;
+
+    memcpy((new + len1), s2, sizeof(struct character) * len2);
+    return new;
+}
+
+int parseTerminal(struct tty *pt) {
+    fprintf(stderr, "%p %p size = %zu parsing terminal\n", (void *) pt, pt->buf, pt->size);
+    char *buf = pt->buf;
+    int i = pt->rawStart;
+    size_t size = pt->size;
+
+    struct style currentStyle;
+    clearStyle(&currentStyle);
+
+    size_t charsSize = 256;
+    int charsNum = 0;
+    struct character *chars = (struct character *) malloc(charsSize * sizeof(struct character));
+    if (chars == NULL) {
+        fprintf(stderr, "chars malloc error\n");
+        return -1;
+    }
+
+    for (int j = 0; j < size; j++) {
+        fprintf(stderr, "%d\n", buf[j]);
+    }
+
+    for (; i < size; i++) {
+        char c = buf[i];
+        fprintf(stderr, "parsing %d\n", c);
+        if (pt->esc_seq) {
+            parseEsc(&pt->pars, c);
+            if (!pt->pars.ended) continue;
+            pt->pars.ended = 0;
+            pt->esc_seq = 0;
+            struct esc res = pt->pars.res;
+            switch (res.code) {
+                case ERROR: {
+                    fprintf(stderr, "parsing escape seq error\n");
+                    break;
+                }
+                case NOT_SUPPORTED: {
+                    fprintf(stderr, "unsupported esc seq %d\n", c);
+                    break;
+                }
+                case STYLE: {
+                    currentStyle = res.s;
+                    break;
+                }
+                case RESET_STYLE: {
+                    clearStyle(&currentStyle);
+                    break;
+                }
+                default: {
+                    fprintf(stderr, "res.code = %d\n", res.code);
+                }
+            }
+            reinit_parser(&pt->pars);
+        } else {
+            if (c == '\x1b') {
+                pt->esc_seq = 1;
+                continue;
+            }
+
+            size_t char_size = pt->current_char.size;
+            pt->current_char.c[char_size] = c;
+            pt->current_char.size++;
+
+            validate_utf8(&pt->utf8_state, &c, 1);
+            if (pt->utf8_state == UTF8_REJECT) {
+                fprintf(stderr, "symbol %d is not valid\n", *(int*)pt->current_char.c);
+                clearChar(&pt->current_char);
+                pt->utf8_state = UTF8_ACCEPT;
+            } else if (pt->utf8_state == UTF8_ACCEPT) {
+                pt->current_char.s = currentStyle;
+                chars[charsNum++] = pt->current_char;
+                clearChar(&pt->current_char);
+
+                if (charsNum >= charsSize) {
+                    charsSize *= 2;
+                    chars = realloc(chars, charsSize * sizeof(struct character));
+                }
+            } else {
+                fprintf(stderr, "needs more characters\n");
+            }
+        }
+    }
+
+    fprintf(stderr, "parsed %d\n", charsNum);
+
+    if (charsNum != 0) {
+        pt->chars = appendChars(pt->chars, pt->charSize, chars, charsNum);
+        if (pt->chars == NULL) {
+            fprintf(stderr, "append chars error\n");
+            return -1;
+        }
+
+        pt->charSize += charsNum;
+        pt->rawStart = size;
+    }
+
+    free(chars);
+    return 0;
+}
+
 int readTerminal(struct tty *pt) {
     size_t size = 256, sum = 0;
     char *data = malloc(size);
@@ -138,11 +297,13 @@ int readTerminal(struct tty *pt) {
         pt->rawStart = pt->size;
         pt->size += sum;
 //        write(STDERR_FILENO, data, sum);
+        if (sum == 2) {
+            fprintf(stderr, "%d %d\n", data[0], data[1]);
+        }
     }
 
     free(data);
 
-    fprintf(stderr, "%p parsing terminal\n", (void*)pt);
     int res = parseTerminal(pt);
     if (res < 0) {
         fprintf(stderr, "\x1b[32mparse error\x1b[0m\n");
@@ -216,10 +377,6 @@ char *generateStyleStr(struct style *s, int *num) {
 }
 
 char *getHTML(struct tty *pt, int *len) {
-    fprintf(stderr, "\x1b[32mgetting html\x1b[0m\n");
-
-//    write(STDERR_FILENO, pt->buf, pt->size);
-
     if (!pt->changed) {
         *len = 10;
         printf("no changes\n");

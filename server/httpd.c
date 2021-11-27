@@ -59,7 +59,6 @@ void serve_forever(int port, struct tty *pt) {
             break;
         }
 
-        printf("polling %d fds\n", rc);
 
         current_size = nfds;
         for (i = 0; i < current_size; i++) {
@@ -299,6 +298,9 @@ int respond(int fd) {
 //               fprintf(stderr, "body is empty\n");
         }
 
+        for (int i = 0; i < payload_size; i++) {
+            fprintf(stderr, "%d\n", payload[i]);
+        }
         connection = request_header("Connection");
         req.method = method;
         req.payload = payload;

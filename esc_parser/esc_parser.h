@@ -6,7 +6,6 @@
 #define WEBTERMINAL_ESC_PARSER_H
 
 #include <stdlib.h>
-#include <tty.h>
 
 #define ERROR 0
 #define ERASE_VISIBLE_SCREEN 1
@@ -42,7 +41,7 @@ struct moveCursor {
 };
 
 struct character {
-    char c[2];
+    char c[4];
     size_t size;    //TODO: for utf
     struct style s;
 };
@@ -53,11 +52,24 @@ struct esc {
     struct moveCursor cursor;
 };
 
+#define MAX_DIGITS 6
+#define MAX_DIGITS_LEN 10
 
-int parseTerminal(struct tty *pt);
+struct esc_parser {
+    int ended;
+    struct esc res;
+    int state;
+    char digits[MAX_DIGITS][MAX_DIGITS_LEN];
+    short digitsNum;
+    short currentDigitPos;
+    short maxDigits;
+    short maxDigitLen;
+};
+
 void clearStyle(struct style *s);
 int styleIsEmpty(struct style *s);
 int styleEqual(struct style *s1, struct style *s2);
-struct esc parseEsc(const char *buf, size_t maxsize, int *i);   //TODO: remove from header
+void parseEsc(struct esc_parser*, char);   //TODO: remove from header
+void reinit_parser(struct esc_parser *parser);
 
 #endif //WEBTERMINAL_ESC_PARSER_H
