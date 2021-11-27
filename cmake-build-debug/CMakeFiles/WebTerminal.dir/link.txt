@@ -1,0 +1,1 @@
+/usr/bin/cc -g   CMakeFiles/WebTerminal.dir/main.c.o CMakeFiles/WebTerminal.dir/server/httpd.c.o CMakeFiles/WebTerminal.dir/tty/tty.c.o CMakeFiles/WebTerminal.dir/esc_parser/esc_parser.c.o  -o WebTerminal 

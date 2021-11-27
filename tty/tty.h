@@ -5,7 +5,7 @@
 #ifndef WEBTERMINAL_TTY_H
 #define WEBTERMINAL_TTY_H
 
-#include "../esc_parser/esc_parser.h"
+#include <esc_parser.h>
 
 struct tty {
     int master;
@@ -21,5 +21,6 @@ struct tty startTerminal();
 int writeTerminal(char*, size_t, struct tty);
 char *getBuf(struct tty);
 char *getHTML(struct tty *, int *);
+int readTerminal(struct tty *pt);
 
 #endif //WEBTERMINAL_TTY_H

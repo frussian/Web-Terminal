@@ -14,8 +14,7 @@
 #include <sys/ioctl.h>
 #include <string.h>
 
-#include "tty.h"
-#include "../esc_parser/esc_parser.h"
+#include <esc_parser.h>
 
 struct tty startTerminal() {
     struct tty pt;
@@ -139,14 +138,9 @@ int readTerminal(struct tty *pt) {
         pt->rawStart = pt->size;
         pt->size += sum;
 //        write(STDERR_FILENO, data, sum);
-        pt->changed = 1;
-    } else {
-        pt->changed = 0;
     }
 
     free(data);
-
-    if (!pt->changed) return 0;
 
     fprintf(stderr, "%p parsing terminal\n", (void*)pt);
     int res = parseTerminal(pt);
@@ -224,12 +218,11 @@ char *generateStyleStr(struct style *s, int *num) {
 char *getHTML(struct tty *pt, int *len) {
     fprintf(stderr, "\x1b[32mgetting html\x1b[0m\n");
 
-    readTerminal(pt);
-
-    write(STDERR_FILENO, pt->buf, pt->size);
+//    write(STDERR_FILENO, pt->buf, pt->size);
 
     if (!pt->changed) {
         *len = 10;
+        printf("no changes\n");
         return "no changes";
     }
 

@@ -6,7 +6,7 @@
 #define WEBTERMINAL_ESC_PARSER_H
 
 #include <stdlib.h>
-#include "../tty/tty.h"
+#include <tty.h>
 
 #define ERROR 0
 #define ERASE_VISIBLE_SCREEN 1

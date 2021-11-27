@@ -4,25 +4,25 @@
 
 #include <fcntl.h>
 #include <unistd.h>
-#include "server/httpd.h"
-#include "tty/tty.h"
+#include <httpd.h>
+#include <tty.h>
 
-static struct tty pt; //TODO: create shared memory for this
+static struct tty pt;
 
 int main(int c, char** v) {
     pt = startTerminal();
-    if (pt.master < 0) return 1;
+    if (pt.master < 0) return -1;
 
-    int fd = open("out.txt", O_WRONLY);
+    int fd = open("stderr_log.txt", O_WRONLY | O_CREAT | O_TRUNC);
     dup2(fd, STDERR_FILENO);
-    serve_forever("3018");
+    serve_forever(3018, &pt);
     return 0;
 }
 
 
 //1 - ok
 //-1 - close connection
-int route() {
+int route(struct request req) {
     ROUTE_START()
 
     GET("/") {
@@ -30,7 +30,7 @@ int route() {
         char *html = getHTML(&pt, &len);
         if (html == NULL) {
             fprintf(stderr, "html is null\n");
-            httpCode(500);
+            http_code(req.fd, 500);
             return KEEP_CONN;
         } else {
 //            fprintf(stderr, "got html\n");
@@ -38,64 +38,64 @@ int route() {
             int i = sprintf(lenstr, "%d", len);
             lenstr[i] = 0;
 
-            httpCode(200);
-            writeHeader("Content-Length", lenstr);
-            writeHeader("Content-Type", "text/html; charset=utf-8");
+            http_code(req.fd, 200);
+            write_header(req.fd, "Content-Length", lenstr);
+            write_header(req.fd, "Content-Type", "text/html; charset=utf-8");
         }
 
-        if (headerIsPresent("Origin")) {
-            writeHeader("Access-Control-Allow-Origin", "*");  //TODO: change it to one domain
+        if (header_is_present("Origin")) {
+            write_header(req.fd, "Access-Control-Allow-Origin", "*");  //TODO: change it to one domain
         }
 
-        writeConn("\r\n");
+            write_conn(req.fd, "\r\n");
 
-        writeConn(html);
+            write_conn(req.fd, html);
     }
 
     POST("/") {
-        if (payload != NULL) {
-            if (strcmp("newline", payload) == 0) {
+        if (req.payload != NULL) {
+            if (strcmp("newline", req.payload) == 0) {
                 writeTerminal("\n", 1, pt);
             } else {
-                writeTerminal(payload, payload_size, pt);
+                writeTerminal(req.payload, req.payload_size, pt);
             }
 
-            httpCode(200);
+            http_code(req.fd, 200);
 
-            if (headerIsPresent("Origin")) {
-                writeHeader("Access-Control-Allow-Origin", "*");  //TODO: change it to one domain
+            if (header_is_present("Origin")) {
+                write_header(req.fd, "Access-Control-Allow-Origin", "*");  //TODO: change it to one domain
             }
 
-            writeHeader("Content-Length", "2");
-            writeConn("\r\n");
+            write_header(req.fd, "Content-Length", "2");
+            write_conn(req.fd, "\r\n");
 
-            writeConn("ok");
+            write_conn(req.fd, "ok");
         } else {
-            httpCode(400);
-            writeHeader("Content-Length", "12");
+            http_code(req.fd, 400);
+            write_header(req.fd, "Content-Length", "12");
 
-            if (headerIsPresent("Origin")) {
-                writeHeader("Access-Control-Allow-Origin", "*");  //TODO: change it to one domain
+            if (header_is_present("Origin")) {
+                write_header(req.fd, "Access-Control-Allow-Origin", "*");  //TODO: change it to one domain
             }
 
-            writeConn("\r\n");
-            writeConn("invalid data");
+            write_conn(req.fd, "\r\n");
+            write_conn(req.fd, "invalid data");
         }
 
     }
 
     OPTIONS("/") {
-        httpCode(200);
-        writeHeader("Access-Control-Allow-Origin", "*");  //TODO: change it to one domain and add methods, headers
-        writeHeader("Access-Control-Allow-Methods", "POST, GET, OPTIONS");
-        writeHeader("Access-Control-Allow-Headers", "Content-Type");
-        writeHeader("Access-Control-Max-Age", "86400");
-        writeHeader("Connection", "keep-alive");
-        writeHeader("Content-Length", "0");
-        writeConn("\r\n");
+            http_code(req.fd, 200);
+            write_header(req.fd, "Access-Control-Allow-Origin", "*");  //TODO: change it to one domain and add methods, headers
+            write_header(req.fd, "Access-Control-Allow-Methods", "POST, GET, OPTIONS");
+            write_header(req.fd, "Access-Control-Allow-Headers", "Content-Type");
+            write_header(req.fd, "Access-Control-Max-Age", "86400");
+            write_header(req.fd, "Connection", "keep-alive");
+            write_header(req.fd, "Content-Length", "0");
+            write_conn(req.fd, "\r\n");
     }
 
-    ROUTE_END()
+        ROUTE_END()
 
     return KEEP_CONN;
 }

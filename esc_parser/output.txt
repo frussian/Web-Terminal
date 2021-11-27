@@ -1,0 +1,20 @@
+<p>bash: service: command not found
+</p><p>frussian@DESKTOP-VHVTS4T:/mnt/c/Users/Anton/Desktop/BMSTU/Project/Практик�
+а/Web Terminal/cmake-build-debug$ ls
+</p><p>[01;32mCMakeCache.txt  [01;32mMakefile     [01;32mWebTerminal.cbp
+</p><p>[34;42mCMakeFiles      [01;32mWebTerminal  [01;32mcmake_install.cmake
+</p><p>frussian@DESKTOP-VHVTS4T:/mnt/c/Users/Anton/Desktop/BMSTU/Project/Практик�
+а/Web Terminal/cmake-build-debug$ htop
+</p><p>(B)0[1;24r[m[?7h[?1h=[H[J[1B  1  [0;1m[                          0.0%[0;1m][m   5  [0;1m[                          0.0%[0;1m][1B[73D[m2  [0;1m[                          0.0%[0;1m][m   6  [0;1m[                          0.0%[0;1m][1B[73D[m3  [0;1m[                          0.0%[0;1m][m   7  [0;1m[                          0.0%[0;1m][1B[73D[m4  [0;1m[                          0.0%[0;1m][m   8  [0;1m[                          0.0%[0;1m][1B[73D[mMem[0;1m[|||||||[m#*          6.60G/31.9G[0;1m][m   Tasks: [0;1m10[m, [0;7m1[0;1m thr[m; [0;1m1[m running
+[1B  Swp[0;1m[|                  12.7M/4.87G[0;1m][m   Load average: [0;1m0.52 [m0.58 0.59 [8;41H[mUptime: [0;1m00:20:11
+[2B[0;7m  PID USER      PRI  NI  VIRT   RES   SHR S CPU% MEM%   TIME+  Command          [11;1H    6 root       20   0  8904   320   284 S  0.0  0.0  0:00.00 /init            [12;5H[m1 root      [m 20   0 [0;1m 8[m904   320   284 S  0.0  0.0  0:00.12 /init
+[1B   26 root      [m 20   0 [0;1m19[m816 [0;1m 1[m116 [0;1m 1[m040 S  0.0  0.0  0:00.00 /usr/sbin/sshd
+[1B   29 root      [m 20   0 [0;1m20[m464 [0;1m 4[m544 [0;1m 4[m396 S  0.0  0.0  0:00.02 sshd: frussian [p[15;4H35 frussian   20   0 [0;1m20[m464 [0;1m 1[m636 [0;1m 1[m528 S  0.0  0.0  0:00.01 sshd: frussian@pt[16;4H37 root      [m 20   0 [0;1m 8[m904   220   172 S  0.0  0.0  0:00.01 /init
+[1B   38 frussian   20   0 [0;1m15[m036 [0;1m 2[m376 [0;1m 2[m192 S  0.0  0.0  0:00.01 -bash
+[1B   88 frussian   20   0 [0;1m10[m416   780   760 S  0.0  0.0  0:00.00
+[1B   89 frussian   20   0 [0;1m12[m044 [0;1m 2[m192 [0;1m 2[m112 S  0.0  0.0  0:00.03 /bin/bash
+[1B   92 frussian   20   0 [0;1m10[m548   552   300 S  0.0  0.0  0:00.01
+[1B  108 frussian   20   0 [0;1m12[m844 [0;1m 1[m804 [0;1m 1[m260 [0;1mR [m 0.0  0.0  0:00.01 htop
+[3BF1[0;7mHelp  [mF2[0;7mSetup [mF3[0;7mSearch[mF4[0;7mFilter[mF5[0;7mTree  [mF6[0;7mSortBy[mF7[0;7mNice -[mF8[0;7mNice +[mF9[0;7mKill  [mF10[0;7mQuit[?7l [?7h[H[m[1B[6C[0;1m###****[2;32H19.2[2;45H[0;1m#*[2;71H1.3[1B[67D[0;1m#[3;35H7[3;45H[0;1m#[3;71H3.3[1B[67D[0;1m#####******[4;32H34.7[4;45H[0;1m#######**********[4;70H54[1B[65D[0;1m#*[5;33H4.6[5;45H[0;1m#[5;71H2[8;56H[0;1m3[20;34H[m76   316[21;33H908 [0;1m 1[m356[H[24;1H
+[?1l>frussian@DESKTOP-VHVTS4T:/mnt/c/Users/Anton/Desktop/BMSTU/Project/Практик�
+а/Web Terminal/cmake-build-debug$ </p>

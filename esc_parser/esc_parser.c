@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
-#include "esc_parser.h"
+#include <esc_parser.h>
 #include "../tty/tty.h"
 
 //struct esc parseEsc(const char *, size_t, int *);
@@ -58,7 +58,7 @@ int parseTerminal(struct tty *pt) {
     }
 
     while (i < size) {
-        fprintf(stderr, "%d\n", i);
+//        fprintf(stderr, "%d\n", i);
         if (buf[i] == '\x1b' && i + 1 < size && buf[i+1] == '[') {
             i += 2;
             struct esc res = parseEsc(buf + i, size - i, &i);
@@ -420,10 +420,10 @@ struct esc parseEsc(const char *buf, size_t maxsize, int *i) {
         if (flag) break;
     }
 
-    write(STDERR_FILENO, "\x1b[1;35m", 7);
-    write(STDERR_FILENO, buf, j);
-    write(STDERR_FILENO, "\n", 1);
-    write(STDERR_FILENO, "\x1b[0m", 4);
+//    write(STDERR_FILENO, "\x1b[1;35m", 7);
+//    write(STDERR_FILENO, buf, j);
+//    write(STDERR_FILENO, "\n", 1);
+//    write(STDERR_FILENO, "\x1b[0m", 4);
 
     if (i) *i += j;
 
