@@ -266,7 +266,8 @@ void parseEsc(struct esc_parser *pars, char c) {
                         }
 
                         for (int n = 0; n < pars->digitsNum; n++) {
-                            if (strcmp(pars->digits[n], "0") == 0) {
+                            if (strcmp(pars->digits[n], "0") == 0 ||
+                                strcmp(pars->digits[n], "00") == 0) {
                                 pars->res.code = RESET_STYLE;         //TODO: allow more modes after 0
                                                                       //reset style and continue loop
                             } else if (strcmp(pars->digits[n], "1") == 0) {

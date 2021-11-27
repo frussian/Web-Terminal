@@ -22,7 +22,11 @@ struct tty {
     u_int32_t utf8_state;
 };
 
-struct tty startTerminal();
+struct tty_settings {
+    char *terminal;
+};
+
+struct tty startTerminal(struct tty_settings);
 int writeTerminal(char*, size_t, struct tty);
 char *getBuf(struct tty);
 char *getHTML(struct tty *, int *);

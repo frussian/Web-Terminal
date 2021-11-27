@@ -62,7 +62,7 @@ void clearChar(struct character *c) {
     }
 }
 
-struct tty startTerminal() {
+struct tty startTerminal(struct tty_settings settings) {
     struct tty pt;
     int master = posix_openpt(O_RDWR); //TODO: set O_NOCTTY?
     if (master < 0) {
@@ -141,7 +141,17 @@ struct tty startTerminal() {
         setsid();
 
         ioctl(STDIN_FILENO, TIOCSCTTY, 1); //1
-        execl("/bin/bash", "/bin/bash", NULL);
+
+        char *envp[2] = {NULL, NULL};
+        char buf[64];
+        if (settings.terminal) {
+            memcpy(buf, "TERM=", 5);
+            buf[5] = 0;
+            strcat(buf, settings.terminal);
+            envp[0] = buf;
+        }
+
+        execle("/bin/bash", "/bin/bash", NULL, envp);
     }
 
     return pt;
@@ -188,14 +198,14 @@ int parseTerminal(struct tty *pt) {
         return -1;
     }
 
-    for (int j = 0; j < size; j++) {
-        fprintf(stderr, "%d\n", buf[j]);
-    }
+//    for (int j = 0; j < size; j++) {
+//        fprintf(stderr, "%d\n", buf[j]);
+//    }
 
     for (; i < size; i++) {
         char c = buf[i];
-        fprintf(stderr, "parsing %d\n", c);
         if (pt->esc_seq) {
+            fprintf(stderr, "%c\n", c);
             parseEsc(&pt->pars, c);
             if (!pt->pars.ended) continue;
             pt->pars.ended = 0;
@@ -225,6 +235,7 @@ int parseTerminal(struct tty *pt) {
             reinit_parser(&pt->pars);
         } else {
             if (c == '\x1b') {
+                fprintf(stderr, "\n");
                 pt->esc_seq = 1;
                 continue;
             }

@@ -10,7 +10,10 @@
 static struct tty pt;
 
 int main(int c, char** v) {
-    pt = startTerminal();
+    struct tty_settings settings;
+    settings.terminal = "vt100";
+
+    pt = startTerminal(settings);
     if (pt.master < 0) return -1;
 
     int fd = open("stderr_log.txt", O_WRONLY | O_CREAT | O_TRUNC);
