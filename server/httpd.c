@@ -291,16 +291,14 @@ int respond(int fd) {
         payload = t;
         payload_size = t2 ? atol(t2) : (rcvd - (t - buf));
         if (payload != NULL) {
-            fprintf(stderr, "string: %s\n", payload);
+            /*fprintf(stderr, "string: %s\n", payload);
             fprintf(stderr, "code: %d\n", *payload);
             fprintf(stderr, "payload_size = %d\n", payload_size);
+             */
         } else {
 //               fprintf(stderr, "body is empty\n");
         }
 
-        for (int i = 0; i < payload_size; i++) {
-            fprintf(stderr, "%d\n", payload[i]);
-        }
         connection = request_header("Connection");
         req.method = method;
         req.payload = payload;

@@ -6,18 +6,19 @@
 #include <unistd.h>
 #include <httpd.h>
 #include <tty.h>
+#include <editor.h>
 
 static struct tty pt;
 
 int main(int c, char** v) {
     struct tty_settings settings;
-    settings.terminal = "vt100";
+    settings.terminal = "aixterm";
 
     pt = startTerminal(settings);
     if (pt.master < 0) return -1;
 
-    int fd = open("stderr_log.txt", O_WRONLY | O_CREAT | O_TRUNC);
-    dup2(fd, STDERR_FILENO);
+   /* int fd = open("stderr_log.txt", O_WRONLY | O_CREAT | O_TRUNC);
+    dup2(fd, STDERR_FILENO);*/
     serve_forever(3018, &pt);
     return 0;
 }
@@ -30,7 +31,7 @@ int route(struct request req) {
 
     GET("/") {
         int len = 0;
-        char *html = getHTML(&pt, &len);
+        char *html = getHTML(&pt.ed, &len);
         if (html == NULL) {
             fprintf(stderr, "html is null\n");
             http_code(req.fd, 500);
@@ -50,9 +51,9 @@ int route(struct request req) {
             write_header(req.fd, "Access-Control-Allow-Origin", "*");  //TODO: change it to one domain
         }
 
-            write_conn(req.fd, "\r\n");
+        write_conn(req.fd, "\r\n");
 
-            write_conn(req.fd, html);
+        write_conn(req.fd, html);
     }
 
     POST("/") {

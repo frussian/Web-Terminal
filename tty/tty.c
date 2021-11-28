@@ -75,8 +75,9 @@ struct tty startTerminal(struct tty_settings settings) {
     pt.buf = NULL;
     pt.size = 0;
     pt.rawStart = 0;
-    pt.chars = NULL;
-    pt.charSize = 0;
+
+    init_editor(&pt.ed);
+
     pt.changed = 1;
     pt.esc_seq = 0;
 
@@ -142,27 +143,14 @@ struct tty startTerminal(struct tty_settings settings) {
 
         ioctl(STDIN_FILENO, TIOCSCTTY, 1); //1
 
-        char *envp[2] = {NULL, NULL};
-        char buf[64];
         if (settings.terminal) {
-            memcpy(buf, "TERM=", 5);
-            buf[5] = 0;
-            strcat(buf, settings.terminal);
-            envp[0] = buf;
+            setenv("TERM", settings.terminal, 1);
         }
-
-        execle("/bin/bash", "/bin/bash", NULL, envp);
+        //inherits all environment variables
+        execl("/bin/bash", "/bin/bash", NULL);
     }
 
     return pt;
-}
-
-char *append(char* s1, int len1, const char *s2, int len2) {
-    char *new = realloc(s1, len1 + len2);
-    if (new == NULL) return NULL;
-
-    memcpy(new + len1, s2, len2);
-    return new;
 }
 
 int writeTerminal(char *data, size_t len, struct tty pt) {
@@ -182,25 +170,12 @@ struct character *appendChars(const struct character *s1, int len1, const struct
 }
 
 int parseTerminal(struct tty *pt) {
-    fprintf(stderr, "%p %p size = %zu parsing terminal\n", (void *) pt, pt->buf, pt->size);
     char *buf = pt->buf;
     int i = pt->rawStart;
     size_t size = pt->size;
 
     struct style currentStyle;
     clearStyle(&currentStyle);
-
-    size_t charsSize = 256;
-    int charsNum = 0;
-    struct character *chars = (struct character *) malloc(charsSize * sizeof(struct character));
-    if (chars == NULL) {
-        fprintf(stderr, "chars malloc error\n");
-        return -1;
-    }
-
-//    for (int j = 0; j < size; j++) {
-//        fprintf(stderr, "%d\n", buf[j]);
-//    }
 
     for (; i < size; i++) {
         char c = buf[i];
@@ -251,33 +226,16 @@ int parseTerminal(struct tty *pt) {
                 pt->utf8_state = UTF8_ACCEPT;
             } else if (pt->utf8_state == UTF8_ACCEPT) {
                 pt->current_char.s = currentStyle;
-                chars[charsNum++] = pt->current_char;
+                add_char(&pt->ed, pt->current_char);
                 clearChar(&pt->current_char);
-
-                if (charsNum >= charsSize) {
-                    charsSize *= 2;
-                    chars = realloc(chars, charsSize * sizeof(struct character));
-                }
             } else {
                 fprintf(stderr, "needs more characters\n");
             }
         }
     }
 
-    fprintf(stderr, "parsed %d\n", charsNum);
+//    pt->rawStart = size; todo: не нужно?
 
-    if (charsNum != 0) {
-        pt->chars = appendChars(pt->chars, pt->charSize, chars, charsNum);
-        if (pt->chars == NULL) {
-            fprintf(stderr, "append chars error\n");
-            return -1;
-        }
-
-        pt->charSize += charsNum;
-        pt->rawStart = size;
-    }
-
-    free(chars);
     return 0;
 }
 
@@ -286,7 +244,6 @@ int readTerminal(struct tty *pt) {
     char *data = malloc(size);
     while (1) {
         int i = read(pt->master, data + sum, size - sum);   //TODO: wsl bug redundant zeros
-        fprintf(stderr, "read %d bytes from terminal\n", i);
         if (i <= 0) {
             break;
         }
@@ -328,142 +285,4 @@ char *getBuf(struct tty pt) {
     return pt.buf;
 }
 
-char *generateStyleStr(struct style *s, int *num) {
-    char *buf = NULL;
-    int len = 0;
-
-    buf = append(buf, 0, "<span style=\"", 13);
-    len += 13;
-
-    if (s->bColor) {
-        buf = append(buf, len, "background-color:", 17);
-        len += 17;
-
-        int len2 = strlen(s->bColor);
-        buf = append(buf, len, s->bColor, len2);
-        len += len2;
-
-        buf = append(buf, len, ";", 1);
-        len++;
-    }
-
-    if (s->fColor) {
-        buf = append(buf, len, "color:", 6);
-        len += 6;
-
-        int len2 = strlen(s->fColor);
-        buf = append(buf, len, s->fColor, len2);
-        len += len2;
-
-        buf = append(buf, len, ";", 1);
-        len++;
-    }
-
-    if (s->bold) {
-        buf = append(buf, len, "font-weight:bold;", 17);
-        len += 17;
-    }
-
-    if (s->italic) {
-        buf = append(buf, len, "font-style:italic;", 18);
-        len += 18;
-    }
-
-    if (s->underline) {
-        buf = append(buf, len, "text-decoration:underline;", 26);
-        len += 26;
-    }
-
-    if (len == 13) {
-        free(buf);
-        return NULL;
-    }
-
-    buf = append(buf, len, "\">", 2);
-    len += 2;
-
-    *num = len;
-
-    return buf;
-}
-
-char *getHTML(struct tty *pt, int *len) {
-    if (!pt->changed) {
-        *len = 10;
-        printf("no changes\n");
-        return "no changes";
-    }
-
-    char *html = NULL;
-    int sum = 0;
-    int i = 0;
-    html = append(html, 0, "<p>", 3);
-    if (html == NULL) {
-        fprintf(stderr, "html is null\n");
-        return NULL;
-    }
-    sum += 3;
-
-    struct style s;
-    char *styleStr = NULL;
-    int styleStrLen = 0;
-    clearStyle(&s);
-
-    while (i < pt->charSize) {
-        struct character c = pt->chars[i];
-        if (*c.c == '\n') {
-            html = append(html, sum, "</p><p>", 7);
-            sum += 7;
-            i++;
-        } else {
-            if (!styleEqual(&c.s, &s)) {
-                if (styleStr) {
-                    html = append(html, sum, "</span>", 7);
-                    sum += 7;
-                }
-
-                styleStrLen = 0;
-
-                s = c.s;
-
-                if (!styleIsEmpty(&c.s)) {
-                    styleStr = generateStyleStr(&c.s, &styleStrLen);
-                    if (styleStr < 0) {
-                        fprintf(stderr, "\x1b[32mnum is negative\x1b[0m\n");
-                        styleStr = 0;
-                    }
-                }
-
-                if (styleStr) {
-                    html = append(html, sum, styleStr, styleStrLen);
-                    sum += styleStrLen;
-                }
-
-            }
-
-            html = append(html, sum, c.c, c.size);
-            sum += c.size;
-
-            if (*c.c == 0) {
-                fprintf(stderr, "found 0 in pt.buf\n");
-            }
-
-            i++;
-        }
-    }
-
-    if (i == 0 || *pt->chars[i-1].c != '\n') {
-        html = append(html, sum, "</p>", 4);
-        sum += 4;
-    }
-
-    html = realloc(html, sum + 1);
-    if (html == NULL) {
-        fprintf(stderr, "html: realloc returned null\n");
-        return NULL;
-    }
-    html[sum] = 0;
-
-    if (len) *len = sum;
-    return html;
-}
+//TODO: move to editor

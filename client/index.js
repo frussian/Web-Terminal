@@ -50,7 +50,11 @@ const keyDownHandler = (e) => {
     } else if (e.key === "ArrowLeft") {
         sendRequest("POST", "\x1b[D");
     } else if (e.key === "ArrowRight") {
-
+        sendRequest("POST", "\x1b[C");
+    } else if (e.key === "ArrowUp") {
+        sendRequest("POST", "\x1b[A");
+    } else if (e.key === "ArrowDown") {
+        sendRequest("POST", "\x1b[B");
     }
     else {
         sendRequest("POST", e.key);
@@ -67,7 +71,7 @@ const reqMonitorBuffer = async () => {
 };
 
 reqMonitorBuffer();
-const intervalID = setInterval(reqMonitorBuffer, 1000);
+let intervalID = setInterval(reqMonitorBuffer, 1000);
 
 function toUTF8Array(str) {
     var utf8 = [];
