@@ -15,6 +15,7 @@
 #include <string.h>
 
 #include <tty.h>
+#include <tools.h>
 
 
 //https://stackoverflow.com/questions/1031645/how-to-detect-utf-8-in-plain-c
@@ -179,8 +180,13 @@ int parseTerminal(struct tty *pt) {
 
     for (; i < size; i++) {
         char c = buf[i];
+        fprintf(stderr, "%d\n", c);
         if (pt->esc_seq) {
-            fprintf(stderr, "%c\n", c);
+            if (c == 7) {
+                fprintf(stderr, "bell\n");
+            } else {
+                fprintf(stderr, "%c\n", c);
+            }
             parseEsc(&pt->pars, c);
             if (!pt->pars.ended) continue;
             pt->pars.ended = 0;
@@ -201,6 +207,36 @@ int parseTerminal(struct tty *pt) {
                 }
                 case RESET_STYLE: {
                     clearStyle(&currentStyle);
+                    break;
+                }
+                case MOVE_CURSOR_HOME: {
+                    set_cx_cy(&pt->ed, 1, 1);
+                    break;
+                }
+                case MOVE_CURSOR_LINE_COLUMN: {
+                    set_cx_cy(&pt->ed, res.cursor.column, res.cursor.line);
+                    break;
+                }
+                case MOVE_CURSOR_LINE: {
+                    add_cy(&pt->ed, res.cursor.line);
+                    break;
+                }
+                case MOVE_CURSOR_COLUMN: {
+                    add_cx(&pt->ed, res.cursor.column);
+                    break;
+                }
+                case MOVE_CURSOR_BEGIN_NEXT_LINE:
+                case MOVE_CURSOR_BEGIN_PREV_LINE: {
+                    set_cx(&pt->ed, 1);
+                    add_cy(&pt->ed, res.cursor.line);
+                    break;
+                }
+                case MOVE_CURSOR_POS_COL: {
+                    set_cx(&pt->ed, res.cursor.column);
+                    break;
+                }
+                case ERASE_VISIBLE_SCREEN: {
+                    erase_visible_screen(&pt->ed);
                     break;
                 }
                 default: {

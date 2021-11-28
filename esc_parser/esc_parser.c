@@ -42,8 +42,8 @@ void reinit_parser(struct esc_parser *parser) {
     parser->res.s.bold = 0;
     parser->res.s.italic = 0;
     parser->res.s.underline = 0;
-    parser->res.cursor.column = 0;
-    parser->res.cursor.line = 0;
+    parser->res.cursor.column = 0; //0 is absence of field
+    parser->res.cursor.line = 0;   //coordinates start from 1
 
     parser->digitsNum = 0;
     parser->currentDigitPos = 0;
@@ -59,6 +59,8 @@ void parseEsc(struct esc_parser *pars, char c) {
         case -1: {
             if (c == '[') {
                 pars->state = 0;
+            } else if (c == '(') {
+                pars->state = 5;
             } else {
                 pars->ended = 1;
                 pars->res.code = NOT_SUPPORTED;
@@ -216,9 +218,9 @@ void parseEsc(struct esc_parser *pars, char c) {
                         pars->res.code = MOVE_CURSOR_POS_COL;
                         if (pars->digitsNum > 0) {
                             long col = strtol(pars->digits[0], NULL, 10);
-                            pars->res.cursor.column = -col;
+                            pars->res.cursor.column = col;
                         } else {
-                            pars->res.cursor.column = -1;
+                            pars->res.cursor.column = 1;
                         }
 
                         pars->ended = 1;
@@ -348,6 +350,7 @@ void parseEsc(struct esc_parser *pars, char c) {
             break;
         }
         //common private modes
+        //?
         case 3: {
             pars->res.code = NOT_SUPPORTED;
             pars->ended = 1;
@@ -361,6 +364,14 @@ void parseEsc(struct esc_parser *pars, char c) {
                 pars->state = 1;
                 parseEsc(pars, c);
             }
+        }
+        case 5: {
+            if (c == 'B') {
+                pars->res.code = NOT_SUPPORTED;
+                pars->ended = 1;
+            }
+
+            break;
         }
     }
 

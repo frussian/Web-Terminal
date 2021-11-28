@@ -12,7 +12,7 @@ static struct tty pt;
 
 int main(int c, char** v) {
     struct tty_settings settings;
-    settings.terminal = "aixterm";
+    settings.terminal = "xterm-256color";
 
     pt = startTerminal(settings);
     if (pt.master < 0) return -1;
