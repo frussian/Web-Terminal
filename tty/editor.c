@@ -56,6 +56,7 @@ void fill_spaces(struct editor *ed, int pos, size_t size) {
     struct character c;
     c.c[0] = ' ';
     c.size = 1;
+    clearStyle(&c.s);
     for (int i = pos; i < pos + size; i++) {
         ed->rows[ed->cy].chars[i] = c;
     }
