@@ -8,6 +8,7 @@
 #include <sys/poll.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
+#include <netdb.h>
 #include <unistd.h>
 #include <stdarg.h>
 #include <errno.h>
@@ -33,6 +34,8 @@ int payload_size;
 
 static header_t reqhdr[17] = {{"\0", "\0"}};
 static int header_num = 0;
+
+int log_connection(int new_sd);
 
 void serve_forever(int port, struct tty *pt) {
     int new_sd, listen_sd = 0;
@@ -75,7 +78,6 @@ void serve_forever(int port, struct tty *pt) {
             if (fds[i].fd == listen_sd) {
                 do {
                     new_sd = accept(listen_sd, NULL, NULL);
-                    printf("accepting client\n");
                     if (new_sd < 0) {
                         if (errno != EWOULDBLOCK) {
                             perror(" accept() failed");
@@ -84,9 +86,13 @@ void serve_forever(int port, struct tty *pt) {
                         break;
                     }
                     if (nfds == MAX_CONNECTIONS) {
+                        printf("max connections %d reached\n", MAX_CONNECTIONS);
                         close(new_sd);
                         break;
                     }
+
+                    log_connection(new_sd);
+
                     fds[nfds].fd = new_sd;
                     fds[nfds].events = POLLIN;
                     nfds++;
@@ -124,6 +130,35 @@ void serve_forever(int port, struct tty *pt) {
     for (i = 0; i < nfds; i++) {
         if (fds[i].fd >= 0) close(fds[i].fd);
     }
+}
+
+int log_connection(int new_sd) {
+    //https://stackoverflow.com/questions/17220006/in-what-conditions-getpeername-returns-ipport-0-0-0-00
+    struct sockaddr_storage client_addr;
+    socklen_t socklen = sizeof(client_addr);
+    int port;
+    char ip[32];
+    int res = getpeername(new_sd, (struct sockaddr *)&client_addr, &socklen);
+    if (res < 0) {
+        printf("cannot get peername for socket %d, errno %d", new_sd, errno);
+        return res;
+    } else {
+        char hbuf[NI_MAXHOST], sbuf[NI_MAXSERV];
+        if (client_addr.ss_family == AF_INET) {
+            struct sockaddr_in *addr_in = (struct sockaddr_in*)&client_addr;
+            port = ntohs(addr_in->sin_port);
+            inet_ntop(AF_INET, &addr_in->sin_addr, ip, sizeof(ip));
+        } else {
+            struct sockaddr_in6 *addr_in = (struct sockaddr_in6 *) &client_addr;
+            port = htons(addr_in->sin6_port);
+            inet_ntop(AF_INET6, &addr_in->sin6_addr, ip, sizeof(ip));
+            getnameinfo((struct sockaddr *)addr_in, sizeof(*addr_in),
+                        hbuf, sizeof(hbuf), sbuf, sizeof(sbuf), 0);
+        }
+        printf("new client ip: %s:%d\n", ip, port);
+        printf("host: %s, service: %s\n", hbuf, sbuf);
+    }
+    return 0;
 }
 
 // start server

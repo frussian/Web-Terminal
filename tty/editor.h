@@ -16,6 +16,10 @@ struct editor_config {
     int auto_wrap;
 };
 
+struct screen {
+
+};
+
 struct editor {
     struct char_row *rows;  //TODO: fixed size buffer?
     size_t rows_num;
@@ -37,7 +41,7 @@ void set_cx_cy(struct editor *ed, int cx, int cy);
 
 void add_cx(struct editor *ed, int offset);
 void add_cy(struct editor *ed, int offset);
-
+void fill_spaces(struct editor *ed, int pos, size_t size);
 void erase_visible_screen(struct editor *ed);
 
 #endif //WEBTERMINAL_EDITOR_H

@@ -11,6 +11,7 @@
 
 struct tty {
     int master;
+    int term_log_fd;
     char *buf;
     size_t size;
     char changed;

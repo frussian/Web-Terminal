@@ -6,6 +6,7 @@
 #define WEBTERMINAL_ESC_PARSER_H
 
 #include <stdlib.h>
+#include <tools.h>
 
 #define ERROR 0
 #define ERASE_VISIBLE_SCREEN 1
@@ -27,7 +28,17 @@
 #define CLEAR_START_TO_CURSOR_LINE 17
 #define RESET_STYLE 18
 #define STYLE 19
-#define NOT_SUPPORTED 20
+#define SET_ICON_WINDOW_NAME 20
+#define SET_ICON_NAME 21
+#define SET_WINDOW_NAME 22
+#define ERASE_N_CHARS_FROM_CURSOR 23
+#define ALT_BUF_ON 24
+#define ALT_BUF_OFF 25
+#define HIDE_CUR 26
+#define SHOW_CUR 27
+#define AUTO_WRAP_ON 28
+#define AUTO_WRAP_OFF 29
+#define NOT_SUPPORTED 100
 
 struct style {
     char *fColor;
@@ -64,12 +75,13 @@ struct esc_parser {
     short currentDigitPos;
     short maxDigits;
     short maxDigitLen;
+    struct abuf text;
 };
 
 void clearStyle(struct style *s);
 int styleIsEmpty(struct style *s);
 int styleEqual(struct style *s1, struct style *s2);
 void parseEsc(struct esc_parser*, char);   //TODO: remove from header
-void reinit_parser(struct esc_parser *parser);
+int init_parser(struct esc_parser *parser);
 
 #endif //WEBTERMINAL_ESC_PARSER_H

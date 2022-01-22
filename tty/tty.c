@@ -17,7 +17,6 @@
 #include <tty.h>
 #include <tools.h>
 
-
 //https://stackoverflow.com/questions/1031645/how-to-detect-utf-8-in-plain-c
 #define UTF8_ACCEPT 0
 #define UTF8_REJECT 1
@@ -85,7 +84,10 @@ struct tty startTerminal(struct tty_settings settings) {
     pt.utf8_state = UTF8_ACCEPT;
     clearChar(&pt.current_char);
 
-    reinit_parser(&pt.pars);
+    if (init_parser(&pt.pars) < 0) {
+        fprintf(stderr, "cannot init parser: malloc");
+        exit(1);
+    }
 
     int flags = fcntl(master, F_GETFL, 0);
     if (flags == -1) {
@@ -163,7 +165,7 @@ int checkZeros(char *buf, size_t size) {
 }
 
 struct character *appendChars(const struct character *s1, int len1, const struct character *s2, int len2) {
-    struct character *new = realloc(s1, sizeof(struct character) * (len1 + len2));
+    struct character *new = realloc((void*)s1, sizeof(struct character) * (len1 + len2));
     if (new == NULL) return NULL;
 
     memcpy((new + len1), s2, sizeof(struct character) * len2);
@@ -180,7 +182,7 @@ int parseTerminal(struct tty *pt) {
 
     for (; i < size; i++) {
         char c = buf[i];
-        fprintf(stderr, "%d\n", c);
+//        fprintf(stderr, "%d\n", c);
         if (pt->esc_seq) {
             if (c == 7) {
                 fprintf(stderr, "bell\n");
@@ -239,11 +241,25 @@ int parseTerminal(struct tty *pt) {
                     erase_visible_screen(&pt->ed);
                     break;
                 }
+                case SET_ICON_WINDOW_NAME: {
+                    struct abuf a_buf = pt->pars.text;
+                    write(STDOUT_FILENO, a_buf.buf, a_buf.offset);
+                    write(STDOUT_FILENO, "\n", 1);
+                    break;
+                }
+                case ERASE_N_CHARS_FROM_CURSOR: {
+                    fill_spaces(&pt->ed, pt->ed.cx, res.cursor.column);
+                    break;
+                }
                 default: {
-                    fprintf(stderr, "res.code = %d\n", res.code);
+                    fprintf(stderr, "ignoring res.code = %d\n", res.code);
                 }
             }
-            reinit_parser(&pt->pars);
+
+            if (init_parser(&pt->pars) < 0) {
+                fprintf(stderr, "cannot reinit parser: malloc\n");
+                exit(1);
+            }
         } else {
             if (c == '\x1b') {
                 fprintf(stderr, "\n");
@@ -300,7 +316,8 @@ int readTerminal(struct tty *pt) {
         pt->buf = append(pt->buf, pt->size, data, sum);
         pt->rawStart = pt->size;
         pt->size += sum;
-//        write(STDERR_FILENO, data, sum);
+        int res = write(pt->term_log_fd, data, sum);
+        printf("res %d, errno %d, writing\n", res, errno);
         if (sum == 2) {
             fprintf(stderr, "%d %d\n", data[0], data[1]);
         }

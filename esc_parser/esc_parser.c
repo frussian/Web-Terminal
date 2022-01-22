@@ -32,7 +32,7 @@ int styleEqual(struct style *s1, struct style *s2) {
 
 }
 
-void reinit_parser(struct esc_parser *parser) {
+int init_parser(struct esc_parser *parser) {
     parser->state = -1;
     parser->ended = 0;
 
@@ -50,7 +50,11 @@ void reinit_parser(struct esc_parser *parser) {
     parser->maxDigits = MAX_DIGITS;
     parser->maxDigitLen = MAX_DIGITS_LEN;
 
+    return init_abuf(&parser->text, 128);
 }
+
+int update_digit(struct esc_parser *pars, char c);
+void inc_digits(struct esc_parser *pars);
 
 void parseEsc(struct esc_parser *pars, char c) {
 
@@ -61,6 +65,8 @@ void parseEsc(struct esc_parser *pars, char c) {
                 pars->state = 0;
             } else if (c == '(') {
                 pars->state = 5;
+            } else if (c == ']') {
+                pars->state = 6;
             } else {
                 pars->ended = 1;
                 pars->res.code = NOT_SUPPORTED;
@@ -281,7 +287,8 @@ void parseEsc(struct esc_parser *pars, char c) {
                             } else if (strcmp(pars->digits[n], "4") == 0) {
                                 pars->res.code = STYLE;
                                 pars->res.s.underline = 1;
-                            } else if (strcmp(pars->digits[n], "30") == 0) {
+                            } else if (strcmp(pars->digits[n], "30") == 0 ||
+                                    strcmp(pars->digits[n], "90") == 0) {
                                 pars->res.code = STYLE;
                                 pars->res.s.fColor = "black";
                             } else if (strcmp(pars->digits[n], "31") == 0) {
@@ -329,16 +336,33 @@ void parseEsc(struct esc_parser *pars, char c) {
                             } else if (strcmp(pars->digits[n], "47") == 0) {
                                 pars->res.code = STYLE;
                                 pars->res.s.bColor = "white";
+                            } else if (pars->digitsNum == 1) {
+                                pars->res.code = NOT_SUPPORTED;
                             }
                         }
 
                         pars->ended = 1;
                         break;
-                    default:
+
+                    case 'X': {
+                        pars->res.code = ERASE_N_CHARS_FROM_CURSOR;
+                        if (pars->digitsNum > 0) {
+                            long col = strtol(pars->digits[0], NULL, 10);
+                            pars->res.cursor.column = col;
+                        } else {
+                            fprintf(stderr, "number of characters expected for ESC[X");
+                            pars->res.code = ERROR;
+                        }
+                        pars->ended = 1;
+                        break;
+                    }
+
+                    default: {
                         pars->res.code = NOT_SUPPORTED;   //TODO: unsupported?
                         pars->ended = 1;
                         fprintf(stderr, "unsupported esc seq c = %d", c);
                         break;
+                    }
                 }
             }
             break;
@@ -352,8 +376,68 @@ void parseEsc(struct esc_parser *pars, char c) {
         //common private modes
         //?
         case 3: {
-            pars->res.code = NOT_SUPPORTED;
-            pars->ended = 1;
+            if (c >= '0' && c <= '9') {
+                int res = update_digit(pars, c);
+                if (res < 0) {
+                    pars->res.code = ERROR;
+                    pars->ended = 1;
+                    break;
+                }
+            } else if (c == ';') {
+                inc_digits(pars);
+            } else {
+                if (pars->currentDigitPos != 0) {
+                    inc_digits(pars);
+                    fprintf(stderr, "pars->digitsNum = %d\n", pars->digitsNum);
+                }
+
+                long code;
+                if (pars->digitsNum > 0) {
+                    code = strtol(pars->digits[0], NULL, 10);
+                } else {
+                    fprintf(stderr, "number of characters expected for ESC[?");
+                    pars->res.code = ERROR;
+                    pars->ended = 1;
+                    break;
+                }
+                if (c != 'h' && c != 'l') {
+                    fprintf(stderr, "unsupported ESC[?{num}%c", c);
+                    pars->res.code = NOT_SUPPORTED;
+                    pars->ended = 1;
+                    break;
+                }
+                
+                switch (code) {
+                    case 1049: {
+                        if (c == 'h') {
+                            pars->res.code = ALT_BUF_ON;
+                        } else {
+                            pars->res.code = ALT_BUF_OFF;
+                        }
+                        break;
+                    }
+                    case 7: {
+                        if (c == 'h') {
+                            pars->res.code = AUTO_WRAP_ON;
+                        } else {
+                            pars->res.code = AUTO_WRAP_OFF;
+                        }
+                        break;
+                    }
+                    case 25: {
+                        if (c == 'h') {
+                            pars->res.code = SHOW_CUR;
+                        } else {
+                            pars->res.code = HIDE_CUR;
+                        }
+                        break;
+                    }
+                    default: {
+                        pars->res.code = NOT_SUPPORTED;
+                    }
+                }
+                pars->ended = 1;
+            }
             break;
         }
         case 4: {
@@ -373,6 +457,68 @@ void parseEsc(struct esc_parser *pars, char c) {
 
             break;
         }
+        //operating system commands
+        case 6: {
+            if (pars->res.code != ERROR) {
+                if (c == ';') {
+                    break;
+                }
+                if (c == '\x07') {
+                    pars->ended = 1;
+                    break;
+                }
+                int res = append_abuf(&pars->text, &c, 1);
+                if (res < 0) {
+                    fprintf(stderr, "cannot append buf\n");
+                    exit(1);
+                }
+                break;
+            }
+
+            switch (c) {
+                case '0': {
+                    pars->res.code = SET_ICON_WINDOW_NAME;
+                    break;
+                }
+                case '1': {
+                    pars->res.code = SET_ICON_NAME;
+                    break;
+                }
+                case '2': {
+                    pars->res.code = SET_WINDOW_NAME;
+                    break;
+                }
+                default : {
+                    pars->res.code = NOT_SUPPORTED;
+                    pars->ended = 1;
+                }
+            }
+//            pars->ended = 1;
+//            pars->res.code = NOT_SUPPORTED;
+            break;
+        }
     }
 
+}
+
+int update_digit(struct esc_parser *pars, char c) {
+    if (pars->digitsNum >= pars->maxDigits) {
+        fprintf(stderr, "error: pars->digitsNum >= 6\n");
+        return -1;
+    }
+
+    pars->digits[pars->digitsNum][pars->currentDigitPos] = c;
+    pars->currentDigitPos++;
+    return 0;
+}
+
+void inc_digits(struct esc_parser *pars) {
+    if (pars->currentDigitPos == 0) {
+        pars->digits[pars->digitsNum][0] = '0';
+        pars->currentDigitPos++;
+    }
+
+    pars->digits[pars->digitsNum][pars->currentDigitPos] = 0;
+    pars->digitsNum++;
+    pars->currentDigitPos = 0;
 }

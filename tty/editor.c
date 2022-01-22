@@ -57,7 +57,8 @@ void fill_spaces(struct editor *ed, int pos, size_t size) {
     c.c[0] = ' ';
     c.size = 1;
     clearStyle(&c.s);
-    for (int i = pos; i < pos + size; i++) {
+    size_t max = ed->rows[ed->cy].row_size;
+    for (int i = pos; i < max && i < pos + size; i++) {
         ed->rows[ed->cy].chars[i] = c;
     }
 }
@@ -67,6 +68,8 @@ void erase_visible_screen(struct editor *ed) {
         ed->cy = y;
         fill_spaces(ed, 0, ed->rows[y].row_size);
     }
+    ed->cy = 0;
+    ed->cx = 0;
 }
 
 void init_row(struct char_row* r) {

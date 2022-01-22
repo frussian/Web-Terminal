@@ -7,6 +7,7 @@
 #include <httpd.h>
 #include <tty.h>
 #include <editor.h>
+#include <errno.h>
 
 static struct tty pt;
 
@@ -17,8 +18,13 @@ int main(int c, char** v) {
     pt = startTerminal(settings);
     if (pt.master < 0) return -1;
 
-   /* int fd = open("stderr_log.txt", O_WRONLY | O_CREAT | O_TRUNC);
-    dup2(fd, STDERR_FILENO);*/
+    int term_fd = open("terminal_out.txt", O_WRONLY | O_CREAT | O_TRUNC);
+    if (term_fd < 0) {
+        printf("term_fd, errno %d\n", errno);
+        exit(1);
+    }
+    pt.term_log_fd = term_fd;
+    //dup2(fd, STDERR_FILENO);
     serve_forever(3018, &pt);
     return 0;
 }
