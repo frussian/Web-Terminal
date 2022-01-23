@@ -13,6 +13,7 @@ void init_editor(struct editor *ed) {
     ed->rows_num = 0;
     ed->conf.auto_wrap = 0;
     ed->conf.irm = 0;
+	ed->conf.visible_cur = 0;
     ed->cx = 0;
     ed->cy = 0;
     ed->max_rows = 80;
