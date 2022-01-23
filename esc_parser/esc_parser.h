@@ -38,6 +38,7 @@
 #define SHOW_CUR 27
 #define AUTO_WRAP_ON 28
 #define AUTO_WRAP_OFF 29
+#define MOVE_CUR_ABS 30
 #define NOT_SUPPORTED 100
 
 struct style {

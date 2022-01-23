@@ -267,6 +267,18 @@ int parseTerminal(struct tty *pt) {
                     clear_start_to_cur_line(&pt->ed);
                     break;
                 }
+                case MOVE_CUR_ABS: {
+                    set_cx_cy(&pt->ed, 1, res.cursor.line);//TODO: не во всех случаях
+                    break;                                     //cx = 1 https://terminalguide.namepad.de/seq/csi_sd/
+                }
+                case ALT_BUF_ON: {
+                    set_alt_buf(&pt->ed, 1, res.alt_buf_clear_on_enter);
+                    break;
+                }
+                case ALT_BUF_OFF: {
+                    set_alt_buf(&pt->ed, 0, res.alt_buf_clear_on_exit);
+                    break;
+                }
                 default: {
                     fprintf(stderr, "ignoring res.code = %d\n", res.code);
                 }

@@ -327,6 +327,12 @@ void parseEsc(struct esc_parser *pars, char c) {
                             } else if (strcmp(pars->digits[n], "47") == 0) {
                                 pars->res.code = STYLE;
                                 pars->res.s.bColor = "white";
+                            } else if (strcmp(pars->digits[n], "39") == 0) {
+                                pars->res.code = STYLE;
+                                pars->res.s.fColor = NULL;
+                            } else if (strcmp(pars->digits[n], "49") == 0) {
+                                pars->res.code = STYLE;
+                                pars->res.s.bColor = NULL;
                             } else if (pars->digitsNum == 1) {
                                 pars->res.code = NOT_SUPPORTED;
                             }
@@ -343,6 +349,17 @@ void parseEsc(struct esc_parser *pars, char c) {
                         } else {
                             fprintf(stderr, "number of characters expected for ESC[X");
                             pars->res.code = ERROR;
+                        }
+                        pars->ended = 1;
+                        break;
+                    }
+                    case 'd': {
+                        pars->res.code = MOVE_CUR_ABS;
+                        if (pars->digitsNum > 0) {
+                            long line = strtol(pars->digits[0], NULL, 10);
+                            pars->res.cursor.line = line;
+                        } else {
+                            pars->res.cursor.line = 1;
                         }
                         pars->ended = 1;
                         break;

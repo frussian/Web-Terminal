@@ -47,4 +47,5 @@ void erase_n_chars_from_screen(struct editor *ed, size_t n);
 void clear_cur_to_end_of_line(struct editor *ed);
 void clear_cur_line(struct editor *ed);
 void clear_start_to_cur_line(struct editor *ed);
+void set_alt_buf(struct editor *ed, int alt_buf, int clear);
 #endif //WEBTERMINAL_EDITOR_H

@@ -69,13 +69,18 @@ void set_cx(struct editor *ed, int cx) {
 }
 
 void set_cy(struct editor *ed, int cy) {
-    if (cy == 0) return;
+    if (cy == 0) cy = 1;
+    if (cy >= ed->rows_num) {
+        cy = ed->rows_num;
+    }
     ed->screens[ed->alt_buf].cy = cy - 1;
 }
 
 void set_cx_cy(struct editor *ed, int cx, int cy) {
-    if (cx != 0) ed->screens[ed->alt_buf].cx = cx - 1;
-    if (cy != 0) ed->screens[ed->alt_buf].cy = cy - 1;
+    set_cx(ed, cx);
+    set_cy(ed, cy);
+//    if (cx != 0) ed->screens[ed->alt_buf].cx = cx - 1;
+//    if (cy != 0) ed->screens[ed->alt_buf].cy = cy - 1;
 }
 
 void add_cx(struct editor *ed, int offset) {
@@ -136,6 +141,15 @@ void clear_start_to_cur_line(struct editor *ed) {
     fill_spaces(ed, 0, scr->cx+1);
 }
 
+void set_alt_buf(struct editor *ed, int alt_buf, int clear) {
+    if (alt_buf) {
+        ed->alt_buf = 1;
+        if (clear) erase_visible_screen(ed);
+    } else {
+        if (clear) erase_visible_screen(ed);
+        ed->alt_buf = 0;
+    }
+}
 
 void init_row(struct char_row* r) {
     r->chars = NULL;
