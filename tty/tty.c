@@ -317,7 +317,9 @@ int readTerminal(struct tty *pt) {
         pt->rawStart = pt->size;
         pt->size += sum;
         int res = write(pt->term_log_fd, data, sum);
-        printf("res %d, errno %d, writing\n", res, errno);
+       	if (res < 0) {
+		fprintf(stderr, "error writing, res %d, errno %d", res, errno);
+	}
         if (sum == 2) {
             fprintf(stderr, "%d %d\n", data[0], data[1]);
         }

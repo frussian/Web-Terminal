@@ -14,6 +14,7 @@ struct char_row {
 struct editor_config {
     int irm;            //0 replace, 1 - insert
     int auto_wrap;
+	int visible_cur;
 };
 
 struct screen {
