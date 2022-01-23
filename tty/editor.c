@@ -102,7 +102,7 @@ void fill_spaces(struct editor *ed, int pos, size_t size) {
     c.size = 1;
     clearStyle(&c.s);
     struct screen *scr = &ed->screens[ed->alt_buf];
-    for (int i = pos; i < pos + size; i++) {
+    for (int i = pos; i < ed->cols_num && i < pos + size; i++) {
         scr->rows[scr->cy][i] = c;
     }
 }
