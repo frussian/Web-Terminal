@@ -114,29 +114,18 @@ void parseEsc(struct esc_parser *pars, char c) {
         case 1: {
 //                fprintf(stderr, "parsing case 1, buf[j] %c\n", buf[j]);
             if (c >= '0' && c <= '9') {
-                if (pars->digitsNum >= pars->maxDigits) {
+                int res = update_digit(pars, c);
+                if (res < 0) {
                     fprintf(stderr, "error: pars->digitsNum >= 6\n");
                     pars->res.code = ERROR;
                     pars->ended = 1;
                     break;
                 }
-
-                pars->digits[pars->digitsNum][pars->currentDigitPos] = c;
-                pars->currentDigitPos++;
             } else if (c == ';') {
-                if (pars->currentDigitPos == 0) {
-                    pars->digits[pars->digitsNum][0] = '0';
-                    pars->currentDigitPos++;
-                }
-
-                pars->digits[pars->digitsNum][pars->currentDigitPos] = 0;
-                pars->digitsNum++;
-                pars->currentDigitPos = 0;
+                inc_digits(pars);
             } else {
                 if (pars->currentDigitPos != 0) {
-                    pars->digits[pars->digitsNum][pars->currentDigitPos] = 0;
-                    pars->digitsNum++;
-                    fprintf(stderr, "pars->digitsNum = %d\n", pars->digitsNum);
+                    inc_digits(pars);
                 }
 
                 switch (c) {
@@ -388,7 +377,6 @@ void parseEsc(struct esc_parser *pars, char c) {
             } else {
                 if (pars->currentDigitPos != 0) {
                     inc_digits(pars);
-                    fprintf(stderr, "pars->digitsNum = %d\n", pars->digitsNum);
                 }
 
                 long code;
@@ -493,8 +481,6 @@ void parseEsc(struct esc_parser *pars, char c) {
                     pars->ended = 1;
                 }
             }
-//            pars->ended = 1;
-//            pars->res.code = NOT_SUPPORTED;
             break;
         }
     }
