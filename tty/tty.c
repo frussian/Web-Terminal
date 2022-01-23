@@ -255,6 +255,18 @@ int parseTerminal(struct tty *pt) {
                     erase_n_chars_from_screen(&pt->ed, res.cursor.column);
                     break;
                 }
+                case CLEAR_CUR_TO_END_OF_LINE: {
+                    clear_cur_to_end_of_line(&pt->ed);
+                    break;
+                }
+                case CLEAR_CURRENT_LINE: {
+                    clear_cur_line(&pt->ed);
+                    break;
+                }
+                case CLEAR_START_TO_CURSOR_LINE: {
+                    clear_start_to_cur_line(&pt->ed);
+                    break;
+                }
                 default: {
                     fprintf(stderr, "ignoring res.code = %d\n", res.code);
                 }

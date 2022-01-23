@@ -44,4 +44,7 @@ void add_cx(struct editor *ed, int offset);
 void add_cy(struct editor *ed, int offset);
 void erase_visible_screen(struct editor *ed);
 void erase_n_chars_from_screen(struct editor *ed, size_t n);
+void clear_cur_to_end_of_line(struct editor *ed);
+void clear_cur_line(struct editor *ed);
+void clear_start_to_cur_line(struct editor *ed);
 #endif //WEBTERMINAL_EDITOR_H

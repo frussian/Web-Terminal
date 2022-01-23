@@ -122,6 +122,20 @@ void erase_n_chars_from_screen(struct editor *ed, size_t n) {
     fill_spaces(ed, scr->cx, n);
 }
 
+void clear_cur_to_end_of_line(struct editor *ed) {
+    struct screen *scr = &ed->screens[ed->alt_buf];
+    fill_spaces(ed, scr->cx, ed->cols_num - scr->cx);
+}
+
+void clear_cur_line(struct editor *ed) {
+    fill_spaces(ed, 0, ed->cols_num);
+}
+
+void clear_start_to_cur_line(struct editor *ed) {
+    struct screen *scr = &ed->screens[ed->alt_buf];
+    fill_spaces(ed, 0, scr->cx+1);
+}
+
 
 void init_row(struct char_row* r) {
     r->chars = NULL;
