@@ -33,31 +33,21 @@ const keyDownHandler = (e) => {
         return;
     }
 
+    const mapKeys = {"Backspace": "\x7f", "Tab": "\t", "Enter": "newline",
+                    "Escape": "\x1b", "Home": "\x1b[1~", "ArrowLeft": "\x1b[D",
+                    "ArrowRight": "\x1b[C", "ArrowUp": "\x1b[A", "ArrowDown": "\x1b[B"};
+
     if (e.ctrlKey && e.key >= 'a' && e.key <= 'z') {
         let code = e.key.charCodeAt(0) - 0x20 - 0x40;
         let char = String.fromCharCode(code);
         sendRequest("POST", char);
-    } else if (e.key === "Backspace") {
-        sendRequest("POST", "\x7f");
-    } else if (e.key === "Tab") {
-        sendRequest("POST", "\t");
-    } else if (e.key === "Enter") {
-        sendRequest("POST", "newline");
-    } else if (e.key === "Escape") {
-        sendRequest("POST", "\x1b");
-    } else if (e.key === "Home") {
-        sendRequest("POST", "\x1b[1~");
-    } else if (e.key === "ArrowLeft") {
-        sendRequest("POST", "\x1b[D");
-    } else if (e.key === "ArrowRight") {
-        sendRequest("POST", "\x1b[C");
-    } else if (e.key === "ArrowUp") {
-        sendRequest("POST", "\x1b[A");
-    } else if (e.key === "ArrowDown") {
-        sendRequest("POST", "\x1b[B");
-    }
-    else {
-        sendRequest("POST", e.key);
+    } else {
+        let v = mapKeys[e.key]
+        if (v === undefined) {
+            sendRequest("POST", e.key);
+        } else {
+            sendRequest("POST", v);
+        }
     }
 };
 
