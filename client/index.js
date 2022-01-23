@@ -34,8 +34,8 @@ const keyDownHandler = (e) => {
     }
 
     const mapKeys = {"Backspace": "\x7f", "Tab": "\t", "Enter": "newline",
-                    "Escape": "\x1b", "Home": "\x1b[1~", "ArrowLeft": "\x1b[D",
-                    "ArrowRight": "\x1b[C", "ArrowUp": "\x1b[A", "ArrowDown": "\x1b[B"};
+                    "Escape": "\x1b", "Home": "\x1b[1~", "ArrowLeft": "\x1bOD",
+                    "ArrowRight": "\x1bOC", "ArrowUp": "\x1bOA", "ArrowDown": "\x1bOB"};
 
     if (e.ctrlKey && e.key >= 'a' && e.key <= 'z') {
         let code = e.key.charCodeAt(0) - 0x20 - 0x40;
