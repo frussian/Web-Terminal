@@ -60,6 +60,7 @@ int route(struct request req) {
         write_conn(req.fd, "\r\n");
 
         write_conn(req.fd, html);
+	free(html);
     }
 
     POST("/") {

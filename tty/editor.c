@@ -349,6 +349,7 @@ char *getHTML(struct editor *ed, int *len) {
                 if (styleStr) {
                     html = append(html, sum, styleStr, styleStrLen);
                     sum += styleStrLen;
+                    //free(styleStr);
                 }
 
             }
