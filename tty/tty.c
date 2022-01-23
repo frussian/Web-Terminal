@@ -76,7 +76,11 @@ struct tty startTerminal(struct tty_settings settings) {
     pt.size = 0;
     pt.rawStart = 0;
 
-    init_editor(&pt.ed);
+    int res = init_editor(&pt.ed);
+    if (res < 0) {
+        fprintf(stderr, "cannot initialize editor\n");
+        exit(1);
+    }
 
     pt.changed = 1;
     pt.esc_seq = 0;
@@ -248,7 +252,7 @@ int parseTerminal(struct tty *pt) {
                     break;
                 }
                 case ERASE_N_CHARS_FROM_CURSOR: {
-                    fill_spaces(&pt->ed, pt->ed.cx, res.cursor.column);
+                    erase_n_chars_from_screen(&pt->ed, res.cursor.column);
                     break;
                 }
                 default: {
@@ -318,8 +322,8 @@ int readTerminal(struct tty *pt) {
         pt->size += sum;
         int res = write(pt->term_log_fd, data, sum);
        	if (res < 0) {
-		fprintf(stderr, "error writing, res %d, errno %d", res, errno);
-	}
+		    fprintf(stderr, "error writing, res %d, errno %d", res, errno);
+	    }
         if (sum == 2) {
             fprintf(stderr, "%d %d\n", data[0], data[1]);
         }

@@ -62,7 +62,6 @@ void serve_forever(int port, struct tty *pt) {
             break;
         }
 
-
         current_size = nfds;
         for (i = 0; i < current_size; i++) {
             if (fds[i].revents == 0) {

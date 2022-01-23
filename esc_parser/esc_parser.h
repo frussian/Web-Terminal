@@ -61,6 +61,8 @@ struct esc {
     int code;
     struct style s;
     struct moveCursor cursor;
+    int alt_buf_clear_on_enter;
+    int alt_buf_clear_on_exit;
 };
 
 #define MAX_DIGITS 6

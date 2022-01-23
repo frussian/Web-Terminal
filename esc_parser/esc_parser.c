@@ -44,6 +44,8 @@ int init_parser(struct esc_parser *parser) {
     parser->res.s.underline = 0;
     parser->res.cursor.column = 0; //0 is absence of field
     parser->res.cursor.line = 0;   //coordinates start from 1
+    parser->res.alt_buf_clear_on_enter = 0;
+    parser->res.alt_buf_clear_on_exit = 0;
 
     parser->digitsNum = 0;
     parser->currentDigitPos = 0;
@@ -396,7 +398,14 @@ void parseEsc(struct esc_parser *pars, char c) {
                 }
                 
                 switch (code) {
+                    case 47:
+                    case 1047:
                     case 1049: {
+                        if (code == 1049) {
+                            pars->res.alt_buf_clear_on_enter = 1;
+                        } else if (code == 1047) {
+                            pars->res.alt_buf_clear_on_exit = 1;
+                        }
                         if (c == 'h') {
                             pars->res.code = ALT_BUF_ON;
                         } else {

@@ -8,46 +8,89 @@
 #include <string.h>
 #include <tools.h>
 
-void init_editor(struct editor *ed) {
-    ed->rows = NULL;
-    ed->rows_num = 0;
+int init_screen(size_t rows_num, size_t cols_num, struct screen *scr) {
+    struct character **rows = malloc(rows_num * sizeof(struct character*));
+    if (rows == NULL) {
+        return -1;
+    }
+
+    struct character c;
+    c.c[0] = ' ';
+    c.size = 1;
+    clearStyle(&c.s);
+
+    int err = 0;
+    int row_num;
+    for (row_num = 0; row_num < rows_num; row_num++) {
+        struct character *row = malloc(cols_num * sizeof(struct character));
+        if (row == NULL) {
+            err = 1;
+            break;
+        }
+        for (int col = 0; col < cols_num; col++) {
+            row[col] = c;
+        }
+        rows[row_num] = row;
+    }
+
+    scr->cx = 0;
+    scr->cy = 0;
+    scr->rows = rows;
+    if (err == 0) return 0;
+
+    for (int i = 0; i < row_num; i++) {
+        free(rows[i]);
+    }
+    free(rows);
+    return -1;
+}
+
+int init_editor(struct editor *ed) {
+    ed->rows_num = 24;
+    ed->cols_num = 80;
+    int res = init_screen(ed->rows_num, ed->cols_num, &ed->screens[0]);
+    if (res < 0) {
+        return res;
+    }
+    res = init_screen(ed->rows_num, ed->cols_num, &ed->screens[1]);
+    if (res < 0) {
+        return res;
+    }
     ed->conf.auto_wrap = 0;
     ed->conf.irm = 0;
-	ed->conf.visible_cur = 0;
-    ed->cx = 0;
-    ed->cy = 0;
-    ed->max_rows = 80;
-    ed->max_cols = 24;
+	ed->conf.visible_cur = 1;
+    ed->alt_buf = 0;
+    return 0;
 }
 
 void set_cx(struct editor *ed, int cx) {
     if (cx == 0) return;
-    ed->cx = cx - 1;
+    ed->screens[ed->alt_buf].cx = cx - 1;
 }
 
 void set_cy(struct editor *ed, int cy) {
     if (cy == 0) return;
-    ed->cy = cy - 1;
+    ed->screens[ed->alt_buf].cy = cy - 1;
 }
 
 void set_cx_cy(struct editor *ed, int cx, int cy) {
-    if (cx != 0) ed->cx = cx - 1;
-    if (cy != 0) ed->cy = cy - 1;
+    if (cx != 0) ed->screens[ed->alt_buf].cx = cx - 1;
+    if (cy != 0) ed->screens[ed->alt_buf].cy = cy - 1;
 }
 
 void add_cx(struct editor *ed, int offset) {
-    ed->cx += offset;
-    if (ed->cx < 0) {
-        ed->cx = 0;
+    ed->screens[ed->alt_buf].cx += offset;
+    if (ed->screens[ed->alt_buf].cx < 0) {
+        ed->screens[ed->alt_buf].cx = 0;
     }
 
     //todo: check right margin
 }
 
 void add_cy(struct editor *ed, int offset) {
-    ed->cy += offset;
-    if (ed->cy < 0) {
-        ed->cy = 0;
+    ed->screens[ed->alt_buf].cy += offset;
+    if (ed->screens[ed->alt_buf].cy < 0) {
+        ed->screens[ed->alt_buf].cy = 0;
     }
 
     //todo: check bottom margin
@@ -58,74 +101,113 @@ void fill_spaces(struct editor *ed, int pos, size_t size) {
     c.c[0] = ' ';
     c.size = 1;
     clearStyle(&c.s);
-    size_t max = ed->rows[ed->cy].row_size;
-    for (int i = pos; i < max && i < pos + size; i++) {
-        ed->rows[ed->cy].chars[i] = c;
+    struct screen *scr = &ed->screens[ed->alt_buf];
+    for (int i = pos; i < pos + size; i++) {
+        scr->rows[scr->cy][i] = c;
     }
 }
 
 void erase_visible_screen(struct editor *ed) {
+    struct screen *scr = &ed->screens[ed->alt_buf];
     for (int y = 0; y < ed->rows_num; y++) {
-        ed->cy = y;
-        fill_spaces(ed, 0, ed->rows[y].row_size);
+        scr->cy = y;
+        fill_spaces(ed, 0, ed->cols_num);
     }
-    ed->cy = 0;
-    ed->cx = 0;
+    scr->cy = 0;
+    scr->cx = 0;
 }
+
+void erase_n_chars_from_screen(struct editor *ed, size_t n) {
+    struct screen *scr = &ed->screens[ed->alt_buf];
+    fill_spaces(ed, scr->cx, n);
+}
+
 
 void init_row(struct char_row* r) {
     r->chars = NULL;
     r->row_size = 0;
 }
 
-void add_rows(struct editor *ed, size_t num) {
-    ed->rows = realloc(ed->rows, sizeof(struct char_row) * (ed->rows_num + num));
-    if (ed->rows == NULL) {
-        fprintf(stderr, "error with realloc ed->rows\n");
-        return;
+void scroll_screen(struct editor *ed) {
+    struct screen *scr = &ed->screens[ed->alt_buf];
+    free(scr->rows[0]);
+    for (int i = 0; i < ed->rows_num - 1; i++) {
+        scr->rows[i] = scr->rows[i+1];
     }
-    int old_size = ed->rows_num;
-    ed->rows_num += num;
+    scr->rows[ed->rows_num-1] = malloc(ed->cols_num * sizeof(struct character));
+    scr->cy--;
+    fill_spaces(ed, 0, ed->cols_num);
+}
 
-    for (int i = old_size; i < ed->rows_num; i++) {
-        init_row(ed->rows + i);
+void irm_insert_char(struct editor *ed, struct character c) {
+    struct screen *scr = &ed->screens[ed->alt_buf];
+    int cx = scr->cx;
+    for (int i = ed->cols_num - 1; i > cx; i++) {
+        scr->rows[scr->cy][i] = scr->rows[scr->cy][i-1];
     }
+    scr->rows[scr->cy][cx] = c;
+    scr->cx++;
+}
+
+void irm_replace_char(struct editor *ed, struct character c) {
+    struct screen *scr = &ed->screens[ed->alt_buf];
+    scr->rows[scr->cy][scr->cx] = c;
+    scr->cx++;
 }
 
 void insert_char(struct editor *ed, struct character c) {
-    int cx = ed->cx;
-    int cy = ed->cy;
-
-    if (cy >= ed->rows_num) {
-        fprintf(stderr, "cy >= rows_num");
-        add_rows(ed, cy - ed->rows_num + 1);
-    }
+    struct screen *scr = &ed->screens[ed->alt_buf];
+    int cx = scr->cx;
+    int cy = scr->cy;
 
 //    fprintf(stderr, "char = %d cx = %d cy = %d\n", c.c[0], cx, cy);
 
-    struct char_row *row = ed->rows + cy;
-    if (cx >= row->row_size) {
-        size_t old_size = row->row_size;
-        row->row_size = cx + 1;
-        row->chars = realloc(row->chars, sizeof(struct character) * row->row_size);
-        if (row->chars == NULL) {
-            fprintf(stderr, "realloc problem row->chars\n");
-            return;
-        }
-        fill_spaces(ed, old_size, cx - old_size);
+    if (ed->conf.irm) {
+        irm_insert_char(ed, c);
+    } else {
+        irm_replace_char(ed, c);
     }
-    row->chars[cx] = c;
-    ed->cx++;
+
+    if (cx == ed->cols_num) {
+        if (ed->conf.auto_wrap) {//TODO: на самом деле что-то посложнее
+            scr->cy++;
+            scr->cx = 0;
+            if (scr->cy == ed->rows_num) {
+                scroll_screen(ed);
+            }
+        } else {
+            scr->cx--;
+        }
+    }
 }
 
 void add_char(struct editor *ed, struct character c) {
     //todo: check \r
-    if (c.size == 1 && c.c[0] == '\n') {
-        ed->cy++;
-        ed->cx = 0;
-        return;
+    struct screen *scr = &ed->screens[ed->alt_buf];
+    if (scr->cx >= ed->cols_num) {
+        scr->cx = ed->cols_num-1;
+    }
+    if (scr->cy >= ed->rows_num) {
+        scr->cy = ed->rows_num-1;
     }
 
+    if (c.size == 1 && c.c[0] == '\n') {
+        scr->cy++;
+        scr->cx = 0;
+        if (scr->cy == ed->rows_num) {
+            scroll_screen(ed);
+        }
+        return;
+    } else if (c.size == 1 && c.c[0] == '\x08') {
+        scr->cx--;
+        return;
+    } else if (c.size == 1 && c.c[0] == '\x07') {
+        //TODO: play sound
+        return;
+    } else if (c.size == 1 && c.c[0] == '\r') {
+        return;
+    }
+    printf("adding char %c %d\n", c.c[0], *(int*)c.c);
     insert_char(ed, c);
 }
 
@@ -205,13 +287,18 @@ char *getHTML(struct editor *ed, int *len) {
     int styleStrLen = 0;
     clearStyle(&s);
 
+    struct screen *scr = &ed->screens[ed->alt_buf];
+
     for (i = 0; i < ed->rows_num; i++) {
         html = append(html, sum, "<p>", 3);
         sum += 3;
 
-        struct char_row *row = ed->rows + i;
-        for (int j = 0; j < row->row_size; j++) {
-            struct character c = row->chars[j];
+        struct character *row = scr->rows[i];
+        for (int j = 0; j < ed->cols_num; j++) {
+            struct character c = row[j];
+            if (i == scr->cy && j == scr->cx && ed->conf.visible_cur) {
+                c.s.underline = 1;
+            }
 //            fprintf(stderr, "char is %c\n", c.c[0]);
             if (!styleEqual(&c.s, &s)) {
                 if (styleStr) {

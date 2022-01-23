@@ -18,19 +18,19 @@ struct editor_config {
 };
 
 struct screen {
-
+    struct character **rows;
+    int cx, cy;
 };
 
 struct editor {
-    struct char_row *rows;  //TODO: fixed size buffer?
-    size_t rows_num;
     struct editor_config conf;
-    int cx, cy;
-    size_t max_rows;
-    size_t max_cols;
+    struct screen screens[2];
+    int alt_buf;
+    size_t rows_num;
+    size_t cols_num;
 };
 
-void init_editor(struct editor *ed);
+int init_editor(struct editor *ed);
 void free_editor(struct editor *ed);
 void add_char(struct editor *ed, struct character c);
 char *getHTML(struct editor *ed, int *len);
@@ -42,7 +42,6 @@ void set_cx_cy(struct editor *ed, int cx, int cy);
 
 void add_cx(struct editor *ed, int offset);
 void add_cy(struct editor *ed, int offset);
-void fill_spaces(struct editor *ed, int pos, size_t size);
 void erase_visible_screen(struct editor *ed);
-
+void erase_n_chars_from_screen(struct editor *ed, size_t n);
 #endif //WEBTERMINAL_EDITOR_H
