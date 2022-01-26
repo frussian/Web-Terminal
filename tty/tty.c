@@ -181,8 +181,8 @@ int parseTerminal(struct tty *pt) {
     int i = pt->rawStart;
     size_t size = pt->size;
 
-    struct style currentStyle;
-    clearStyle(&currentStyle);
+    struct style current_style;
+    clearStyle(&current_style);
 
     for (; i < size; i++) {
         char c = buf[i];
@@ -204,15 +204,29 @@ int parseTerminal(struct tty *pt) {
                     break;
                 }
                 case NOT_SUPPORTED: {
-                    fprintf(stderr, "unsupported esc seq %d\n", c);
+                    fprintf(stderr, "parsing unsupported esc seq %d\n", c);
                     break;
                 }
                 case STYLE: {
-                    currentStyle = res.s;
+                    if (res.s.bColor) {
+                        current_style.bColor = res.s.bColor;
+                    }
+                    if (res.s.fColor) {
+                        current_style.fColor = res.s.fColor;
+                    }
+                    if (res.s.bold) {
+                        current_style.bold = res.s.bold;
+                    }
+                    if (res.s.italic) {
+                        current_style.italic = res.s.italic;
+                    }
+                    if (res.s.underline) {
+                        current_style.underline = res.s.underline;
+                    }
                     break;
                 }
                 case RESET_STYLE: {
-                    clearStyle(&currentStyle);
+                    clearStyle(&current_style);
                     break;
                 }
                 case MOVE_CURSOR_HOME: {
@@ -279,6 +293,18 @@ int parseTerminal(struct tty *pt) {
                     set_alt_buf(&pt->ed, 0, res.alt_buf_clear_on_exit);
                     break;
                 }
+                case SHOW_CUR: {
+                    show_cur(&pt->ed, 1);
+                    break;
+                }
+                case HIDE_CUR: {
+                    show_cur(&pt->ed, 0);
+                    break;
+                }
+                case DELETE_N_CHARS_RIGHT_FROM_CURSOR_WITH_SHIFT: {
+                    delete_n_chars_right_from_cursor_with_shift(&pt->ed, res.cursor.column);
+                    break;
+                }
                 default: {
                     fprintf(stderr, "ignoring res.code = %d\n", res.code);
                 }
@@ -305,7 +331,7 @@ int parseTerminal(struct tty *pt) {
                 clearChar(&pt->current_char);
                 pt->utf8_state = UTF8_ACCEPT;
             } else if (pt->utf8_state == UTF8_ACCEPT) {
-                pt->current_char.s = currentStyle;
+                pt->current_char.s = current_style;
                 add_char(&pt->ed, pt->current_char);
                 clearChar(&pt->current_char);
             } else {

@@ -39,6 +39,7 @@
 #define AUTO_WRAP_ON 28
 #define AUTO_WRAP_OFF 29
 #define MOVE_CUR_ABS 30
+#define DELETE_N_CHARS_RIGHT_FROM_CURSOR_WITH_SHIFT 31  //ESC[amount P
 #define NOT_SUPPORTED 100
 
 struct style {

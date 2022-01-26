@@ -37,11 +37,7 @@ int init_parser(struct esc_parser *parser) {
     parser->ended = 0;
 
     parser->res.code = ERROR;
-    parser->res.s.bColor = NULL;
-    parser->res.s.fColor = NULL;
-    parser->res.s.bold = 0;
-    parser->res.s.italic = 0;
-    parser->res.s.underline = 0;
+    clearStyle(&parser->res.s);
     parser->res.cursor.column = 0; //0 is absence of field
     parser->res.cursor.line = 0;   //coordinates start from 1
     parser->res.alt_buf_clear_on_enter = 0;
@@ -364,11 +360,21 @@ void parseEsc(struct esc_parser *pars, char c) {
                         pars->ended = 1;
                         break;
                     }
+                    case 'P': {
+                        pars->res.code = DELETE_N_CHARS_RIGHT_FROM_CURSOR_WITH_SHIFT;
+                        if (pars->digitsNum > 0) {
+                            long col = strtol(pars->digits[0], NULL, 10);
+                            pars->res.cursor.column = col;
+                        } else {
+                            pars->res.cursor.column = 1;
+                        }
+                        pars->ended = 1;
+                        break;
+                    }
 
                     default: {
-                        pars->res.code = NOT_SUPPORTED;   //TODO: unsupported?
+                        pars->res.code = NOT_SUPPORTED;
                         pars->ended = 1;
-                        fprintf(stderr, "unsupported esc seq c = %d", c);
                         break;
                     }
                 }

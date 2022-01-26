@@ -60,6 +60,8 @@ int init_editor(struct editor *ed) {
     ed->conf.irm = 0;
 	ed->conf.visible_cur = 1;
     ed->alt_buf = 0;
+    ed->showed_cur = 0;
+    clearStyle(&ed->curr_style);
     return 0;
 }
 
@@ -105,7 +107,8 @@ void fill_spaces(struct editor *ed, int pos, size_t size) {
     struct character c;
     c.c[0] = ' ';
     c.size = 1;
-    clearStyle(&c.s);
+    c.s = ed->curr_style;
+//    clearStyle(&c.s);
     struct screen *scr = &ed->screens[ed->alt_buf];
     for (int i = pos; i < ed->cols_num && i < pos + size; i++) {
         scr->rows[scr->cy][i] = c;
@@ -141,6 +144,17 @@ void clear_start_to_cur_line(struct editor *ed) {
     fill_spaces(ed, 0, scr->cx+1);
 }
 
+void delete_n_chars_right_from_cursor_with_shift(struct editor *ed, int n) {
+    struct screen *scr = &ed->screens[ed->alt_buf];
+    int cy = scr->cy;
+    int cx = scr->cx;
+    for (int i = cx + n; i < ed->cols_num; i++) {
+        scr->rows[cy][i - n] = scr->rows[cy][i];
+    }
+    fill_spaces(ed, ed->cols_num - n, n);
+}
+
+
 void set_alt_buf(struct editor *ed, int alt_buf, int clear) {
     if (alt_buf) {
         ed->alt_buf = 1;
@@ -149,6 +163,10 @@ void set_alt_buf(struct editor *ed, int alt_buf, int clear) {
         if (clear) erase_visible_screen(ed);
         ed->alt_buf = 0;
     }
+}
+
+void show_cur(struct editor *ed, int show) {
+    ed->conf.visible_cur = show;
 }
 
 void init_row(struct char_row* r) {
@@ -212,6 +230,7 @@ void insert_char(struct editor *ed, struct character c) {
 void add_char(struct editor *ed, struct character c) {
     //todo: check \r
     struct screen *scr = &ed->screens[ed->alt_buf];
+    ed->curr_style = c.s;
     if (scr->cx >= ed->cols_num) {
         scr->cx = ed->cols_num-1;
     }
@@ -324,8 +343,16 @@ char *getHTML(struct editor *ed, int *len) {
         struct character *row = scr->rows[i];
         for (int j = 0; j < ed->cols_num; j++) {
             struct character c = row[j];
-            if (i == scr->cy && j == scr->cx && ed->conf.visible_cur) {
-                c.s.underline = 1;
+            if (i == scr->cy && j == scr->cx && ed->conf.visible_cur && !ed->showed_cur) {
+                printf("%d %d\n", scr->cx, scr->cy);
+                if (!ed->showed_cur) {
+                    c.s.underline = 1;
+                    ed->showed_cur = 1;
+                } else {
+                    ed->showed_cur = 0;
+                }
+            } else if (i == scr->cy && j == scr->cx && ed->conf.visible_cur) {
+                ed->showed_cur = 0;
             }
 //            fprintf(stderr, "char is %c\n", c.c[0]);
             if (!styleEqual(&c.s, &s)) {
