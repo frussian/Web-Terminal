@@ -223,10 +223,12 @@ int parseTerminal(struct tty *pt) {
                     if (res.s.underline) {
                         current_style.underline = res.s.underline;
                     }
+                    update_style(&pt->ed, current_style);
                     break;
                 }
                 case RESET_STYLE: {
                     clearStyle(&current_style);
+                    update_style(&pt->ed, current_style);
                     break;
                 }
                 case MOVE_CURSOR_HOME: {
