@@ -341,6 +341,7 @@ int respond(int fd) {
         req.qs = qs;
         req.uri = uri;
         req.fd = fd;
+        req.dump_editor = request_header("X-DUMP-EDITOR") ? 1 : 0;
 
         conn = route(req);
     }

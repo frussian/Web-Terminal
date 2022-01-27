@@ -64,6 +64,10 @@ int route(struct request req) {
     }
 
     POST("/") {
+        if (req.dump_editor) {
+            printf("dump editor\n");
+            dump_editor(&pt.ed);
+        }
         if (req.payload != NULL) {
             if (strcmp("newline", req.payload) == 0) {
                 writeTerminal("\n", 1, pt);
@@ -82,15 +86,18 @@ int route(struct request req) {
 
             write_conn(req.fd, "ok");
         } else {
-            http_code(req.fd, 400);
-            write_header(req.fd, "Content-Length", "12");
+//            http_code(req.fd, 400);
+            http_code(req.fd, 200);
+            write_header(req.fd, "Content-Length", "0");
 
             if (header_is_present("Origin")) {
                 write_header(req.fd, "Access-Control-Allow-Origin", "*");  //TODO: change it to one domain
             }
-
+            if (req.dump_editor) {
+                printf("dump editor ok\n");
+            }
             write_conn(req.fd, "\r\n");
-            write_conn(req.fd, "invalid data");
+//            write_conn(req.fd, "invalid data");
         }
 
     }
@@ -99,7 +106,7 @@ int route(struct request req) {
             http_code(req.fd, 200);
             write_header(req.fd, "Access-Control-Allow-Origin", "*");  //TODO: change it to one domain and add methods, headers
             write_header(req.fd, "Access-Control-Allow-Methods", "POST, GET, OPTIONS");
-            write_header(req.fd, "Access-Control-Allow-Headers", "Content-Type");
+            write_header(req.fd, "Access-Control-Allow-Headers", "Content-Type, x-dump-editor");
             write_header(req.fd, "Access-Control-Max-Age", "86400");
             write_header(req.fd, "Connection", "keep-alive");
             write_header(req.fd, "Content-Length", "0");

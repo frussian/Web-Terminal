@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include <tools.h>
 
 int init_screen(size_t rows_num, size_t cols_num, struct screen *scr) {
@@ -171,6 +172,28 @@ void show_cur(struct editor *ed, int show) {
 
 void update_style(struct editor *ed, struct style s) {
     ed->curr_style = s;
+}
+
+void dump_screen(struct editor *ed, int n, FILE *file) {
+    struct screen *scr = &ed->screens[n];
+    for (int i = 0; i < ed->rows_num; i++) {
+        for (int j = 0; j < ed->cols_num; j++) {
+            struct character c = scr->rows[i][j];
+            fprintf(file, "{char %c, size %zu, style: back %s, fore %s, bold %d, italic %d, underline %d} ", c.c[0], c.size,
+                    c.s.bColor, c.s.fColor,
+                    c.s.bold, c.s.italic, c.s.underline);
+        }
+        fprintf(file, "\n");
+    }
+    fprintf(file, "\n");
+}
+
+void dump_editor(struct editor *ed) {
+    FILE *file = stdout;
+    fprintf(file, "main screen\n");
+    dump_screen(ed, 0, file);
+    fprintf(file, "alternate screen\n");
+    dump_screen(ed, 1, file);
 }
 
 void init_row(struct char_row* r) {

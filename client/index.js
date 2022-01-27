@@ -1,21 +1,23 @@
 'use strict';
 
-const sendRequest = async (method, body = null) => {
+const sendRequest = async (method, body = null, headers = null) => {
+    if (headers == null) {
+        headers = {};
+    }
+    headers["Content-Type"] = "text/plain;charset=UTF-8";
     const response = fetch('http://localhost:3018', {
         method: method,
         mode: 'cors',
         cache: "no-cache",
         credentials: "omit",
-        headers: {
-            "Content-Type": "text/plain;charset=UTF-8"
-        },
+        headers: headers,
         body: body
     });
     return await response.then(value => value.text())
         .then(text => {
             if (method === "GET") {
-                console.log(text);
-                console.log(toUTF8Array(text));
+                // console.log(text);
+                // console.log(toUTF8Array(text));
             }
             return text;
         })
@@ -26,6 +28,11 @@ const keyDownHandler = (e) => {
     console.log(e.key, e.ctrlKey, e.code);
     e.preventDefault();
     const alphanumeric = /^[\p{sc=Latn}\p{sc=Cyrillic}\p{Nd}]+$/u;
+
+    if (e.key === "Shift") {
+        sendRequest("POST", null, {"X-DUMP-EDITOR": "true"});
+        return;
+    }
 
     if (e.key === "Shift" || e.key === "Alt" ||
         e.key === "Control" || e.key === "CapsLock" ||

@@ -14,6 +14,7 @@ struct request {
     *payload;        // for POST
     int payload_size;
     int fd;
+    int dump_editor;
 };
 
 // Server control functions

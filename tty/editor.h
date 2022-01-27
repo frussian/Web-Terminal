@@ -53,4 +53,6 @@ void delete_n_chars_right_from_cursor_with_shift(struct editor *ed, int n);
 void set_alt_buf(struct editor *ed, int alt_buf, int clear);
 void show_cur(struct editor *ed, int show);
 void update_style(struct editor *ed, struct style s);
+
+void dump_editor(struct editor *ed);
 #endif //WEBTERMINAL_EDITOR_H
