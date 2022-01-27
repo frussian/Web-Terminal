@@ -296,7 +296,8 @@ void parseEsc(struct esc_parser *pars, char c) {
                             } else if (strcmp(pars->digits[n], "36") == 0) {
                                 pars->res.code = STYLE;
                                 pars->res.s.fColor = "cyan";
-                            } else if (strcmp(pars->digits[n], "37") == 0) {
+                            } else if (strcmp(pars->digits[n], "37") == 0 ||
+                                        strcmp(pars->digits[n], "97") == 0) {
                                 pars->res.code = STYLE;
                                 pars->res.s.fColor = "white";
                             } else if (strcmp(pars->digits[n], "40") == 0) {

@@ -351,7 +351,7 @@ int readTerminal(struct tty *pt) {
     size_t size = 256, sum = 0;
     char *data = malloc(size);
     while (1) {
-        int i = read(pt->master, data + sum, size - sum);   //TODO: wsl bug redundant zeros
+        int i = read(pt->master, data + sum, size - sum);
         if (i <= 0) {
             break;
         }

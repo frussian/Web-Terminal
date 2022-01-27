@@ -340,14 +340,11 @@ char *getHTML(struct editor *ed, int *len) {
     struct screen *scr = &ed->screens[ed->alt_buf];
 
     for (i = 0; i < ed->rows_num; i++) {
-        html = append(html, sum, "<p>", 3);
-        sum += 3;
-
         struct character *row = scr->rows[i];
         for (int j = 0; j < ed->cols_num; j++) {
             struct character c = row[j];
             if (i == scr->cy && j == scr->cx && ed->conf.visible_cur && !ed->showed_cur) {
-                printf("%d %d\n", scr->cx, scr->cy);
+//                printf("%d %d\n", scr->cx, scr->cy);
                 if (!ed->showed_cur) {
                     c.s.underline = 1;
                     ed->showed_cur = 1;
@@ -392,8 +389,8 @@ char *getHTML(struct editor *ed, int *len) {
             }
         }
 
-        html = append(html, sum, "</p>", 4);
-        sum += 4;
+        html = append(html, sum, "\n", 1);
+        sum++;
     }
 
     html = realloc(html, sum + 1);
