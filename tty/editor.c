@@ -353,6 +353,7 @@ void insert_char(struct editor *ed, struct character c) {
 void add_char(struct editor *ed, struct character c) {
     //todo: check \r
     struct screen *scr = &ed->screens[ed->alt_buf];
+    c.s = ed->curr_style;
     if (scr->cx >= ed->cols_num) {
         scr->cx = ed->cols_num-1;
     }

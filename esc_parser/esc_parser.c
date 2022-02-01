@@ -16,6 +16,7 @@ void clear_style(struct style *s) {
     s->fColor = NULL;
     s->bold = 0;
     s->bColor = NULL;
+    s->changed = 0;
 }
 
 int styleIsEmpty(struct style *s) {
@@ -275,71 +276,108 @@ void parseEsc(struct esc_parser *pars, char c) {
                             } else if (strcmp(pars->digits[n], "1") == 0) {
                                 pars->res.code = STYLE;
                                 pars->res.s.bold = 1;
+                                pars->res.s.changed |= BOLD;
+                            } else if (strcmp(pars->digits[n], "22") == 0) {
+                                pars->res.code = STYLE;
+                                pars->res.s.bold = 0;
+                                pars->res.s.changed |= BOLD;
                             } else if (strcmp(pars->digits[n], "3") == 0) {
                                 pars->res.code = STYLE;
                                 pars->res.s.italic = 1;
+                                pars->res.s.changed |= ITALIC;
+                            } else if (strcmp(pars->digits[n], "23") == 0) {
+                                pars->res.code = STYLE;
+                                pars->res.s.italic = 0;
+                                pars->res.s.changed |= ITALIC;
                             } else if (strcmp(pars->digits[n], "4") == 0) {
                                 pars->res.code = STYLE;
                                 pars->res.s.underline = 1;
+                                pars->res.s.changed |= UNDERLINE;
+                            } else if (strcmp(pars->digits[n], "24") == 0) {
+                                pars->res.code = STYLE;
+                                pars->res.s.underline = 0;
+                                pars->res.s.changed |= UNDERLINE;
                             } else if (strcmp(pars->digits[n], "30") == 0 ||
                                     strcmp(pars->digits[n], "90") == 0) {
                                 pars->res.code = STYLE;
                                 pars->res.s.fColor = "black";
-                            } else if (strcmp(pars->digits[n], "31") == 0) {
+                            } else if (strcmp(pars->digits[n], "31") == 0 ||
+                                    strcmp(pars->digits[n], "91") == 0) {
                                 pars->res.code = STYLE;
                                 pars->res.s.fColor = "red";
-                            } else if (strcmp(pars->digits[n], "32") == 0) {
+                            } else if (strcmp(pars->digits[n], "32") == 0 ||
+                                    strcmp(pars->digits[n], "92") == 0) {
                                 pars->res.code = STYLE;
                                 pars->res.s.fColor = "green";
                             } else if (strcmp(pars->digits[n], "33") == 0 ||
                                     strcmp(pars->digits[n], "93") == 0) {
                                 pars->res.code = STYLE;
                                 pars->res.s.fColor = "yellow";
-                            } else if (strcmp(pars->digits[n], "34") == 0) {
+                            } else if (strcmp(pars->digits[n], "34") == 0 ||
+                                    strcmp(pars->digits[n], "94") == 0) {
                                 pars->res.code = STYLE;
                                 pars->res.s.fColor = "blue";
-                            } else if (strcmp(pars->digits[n], "35") == 0) {
+                            } else if (strcmp(pars->digits[n], "35") == 0 ||
+                                    strcmp(pars->digits[n], "95") == 0) {
                                 pars->res.code = STYLE;
                                 pars->res.s.fColor = "magenta";
-                            } else if (strcmp(pars->digits[n], "36") == 0) {
+                            } else if (strcmp(pars->digits[n], "36") == 0 ||
+                                    strcmp(pars->digits[n], "96") == 0) {
                                 pars->res.code = STYLE;
                                 pars->res.s.fColor = "cyan";
                             } else if (strcmp(pars->digits[n], "37") == 0 ||
                                         strcmp(pars->digits[n], "97") == 0) {
                                 pars->res.code = STYLE;
                                 pars->res.s.fColor = "white";
-                            } else if (strcmp(pars->digits[n], "40") == 0) {
+                            } else if (strcmp(pars->digits[n], "40") == 0 ||
+                                    strcmp(pars->digits[n], "100") == 0) {
                                 pars->res.code = STYLE;
                                 pars->res.s.bColor = "black";
-                            } else if (strcmp(pars->digits[n], "41") == 0) {
+                            } else if (strcmp(pars->digits[n], "41") == 0 ||
+                                    strcmp(pars->digits[n], "101") == 0) {
                                 pars->res.code = STYLE;
                                 pars->res.s.bColor = "red";
-                            } else if (strcmp(pars->digits[n], "42") == 0) {
+                            } else if (strcmp(pars->digits[n], "42") == 0 ||
+                                    strcmp(pars->digits[n], "102") == 0) {
                                 pars->res.code = STYLE;
                                 pars->res.s.bColor = "green";
-                            } else if (strcmp(pars->digits[n], "43") == 0) {
+                            } else if (strcmp(pars->digits[n], "43") == 0 ||
+                                    strcmp(pars->digits[n], "103") == 0) {
                                 pars->res.code = STYLE;
                                 pars->res.s.bColor = "yellow";
-                            } else if (strcmp(pars->digits[n], "44") == 0) {
+                            } else if (strcmp(pars->digits[n], "44") == 0 ||
+                                    strcmp(pars->digits[n], "104") == 0) {
                                 pars->res.code = STYLE;
                                 pars->res.s.bColor = "blue";
-                            } else if (strcmp(pars->digits[n], "45") == 0) {
+                            } else if (strcmp(pars->digits[n], "45") == 0 ||
+                                    strcmp(pars->digits[n], "105") == 0) {
                                 pars->res.code = STYLE;
                                 pars->res.s.bColor = "magenta";
-                            } else if (strcmp(pars->digits[n], "46") == 0) {
+                            } else if (strcmp(pars->digits[n], "46") == 0 ||
+                                    strcmp(pars->digits[n], "106") == 0) {
                                 pars->res.code = STYLE;
                                 pars->res.s.bColor = "cyan";
-                            } else if (strcmp(pars->digits[n], "47") == 0) {
+                            } else if (strcmp(pars->digits[n], "47") == 0 ||
+                                    strcmp(pars->digits[n], "107") == 0) {
                                 pars->res.code = STYLE;
                                 pars->res.s.bColor = "white";
                             } else if (strcmp(pars->digits[n], "39") == 0) {
                                 pars->res.code = STYLE;
                                 pars->res.s.fColor = NULL;
+                                pars->res.s.changed |= F_COLOR;
                             } else if (strcmp(pars->digits[n], "49") == 0) {
                                 pars->res.code = STYLE;
                                 pars->res.s.bColor = NULL;
-                            } else if (pars->digitsNum == 1) {
+                                pars->res.s.changed |= B_COLOR;
+                            } else {
                                 pars->res.code = NOT_SUPPORTED;
+                            }
+
+                            if (pars->res.s.fColor) {
+                                pars->res.s.changed |= F_COLOR;
+                            }
+                            if (pars->res.s.bColor) {
+                                pars->res.s.changed |= B_COLOR;
                             }
                         }
 

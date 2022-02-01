@@ -45,10 +45,18 @@
 #define REVERSE_INDEX 34 //ESC[M
 #define NOT_SUPPORTED 100
 
+//bitmask
+#define B_COLOR 1
+#define F_COLOR 2
+#define BOLD 4
+#define ITALIC 8
+#define UNDERLINE 16
+
 struct style {
     char *fColor;
     char *bColor;
     char bold, italic, underline;
+    int changed;
 };
 
 struct moveCursor {

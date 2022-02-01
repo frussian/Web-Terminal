@@ -208,19 +208,19 @@ int parseTerminal(struct tty *pt) {
                     break;
                 }
                 case STYLE: {
-                    if (res.s.bColor) {
+                    if (res.s.changed & B_COLOR) {
                         current_style.bColor = res.s.bColor;
                     }
-                    if (res.s.fColor) {
+                    if (res.s.changed & F_COLOR) {
                         current_style.fColor = res.s.fColor;
                     }
-                    if (res.s.bold) {
+                    if (res.s.changed & BOLD) {
                         current_style.bold = res.s.bold;
                     }
-                    if (res.s.italic) {
+                    if (res.s.changed & ITALIC) {
                         current_style.italic = res.s.italic;
                     }
-                    if (res.s.underline) {
+                    if (res.s.changed & UNDERLINE) {
                         current_style.underline = res.s.underline;
                     }
                     update_style(&pt->ed, current_style);
