@@ -209,6 +209,9 @@ void delete_n_chars_right_from_cursor_with_shift(struct editor *ed, int n) {
 
 
 void set_alt_buf(struct editor *ed, int alt_buf, int clear) {
+    struct screen *scr = &ed->screens[ed->alt_buf];
+    scr->top_margin = 0;
+    scr->bottom_margin = ed->rows_num-1;
     if (alt_buf) {
         ed->alt_buf = 1;
         if (clear) erase_visible_screen(ed);
