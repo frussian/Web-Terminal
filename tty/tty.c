@@ -181,8 +181,7 @@ int parseTerminal(struct tty *pt) {
     int i = pt->rawStart;
     size_t size = pt->size;
 
-    struct style current_style;
-    clear_style(&current_style);
+    struct style current_style = pt->ed.curr_style;
 
     for (; i < size; i++) {
         char c = buf[i];
@@ -223,6 +222,7 @@ int parseTerminal(struct tty *pt) {
                     if (res.s.changed & UNDERLINE) {
                         current_style.underline = res.s.underline;
                     }
+                    printf("style bcolor: %s, fcolor: %s, %s %s\n", current_style.bColor, current_style.fColor, res.s.bColor, res.s.fColor);
                     update_style(&pt->ed, current_style);
                     break;
                 }

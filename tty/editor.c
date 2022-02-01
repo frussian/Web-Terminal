@@ -392,7 +392,7 @@ void add_char(struct editor *ed, struct character c) {
         scr->cx = 0;
         return;
     }
-    printf("adding char %c %d\n", c.c[0], *(int*)c.c);
+//    printf("adding char %c %d\n", c.c[0], *(int*)c.c);
     insert_char(ed, c);
 }
 
