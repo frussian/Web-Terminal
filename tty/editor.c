@@ -500,7 +500,7 @@ char *getHTML(struct editor *ed, int *len) {
 
                 s = c.s;
 
-                if (!styleIsEmpty(&c.s)) {
+                if (!style_is_empty(&c.s)) {
                     styleStr = generateStyleStr(&c.s, &styleStrLen);
                     if (styleStr < 0) {
                         fprintf(stderr, "\x1b[32mnum is negative\x1b[0m\n");

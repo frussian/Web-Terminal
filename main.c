@@ -15,7 +15,7 @@ int main(int c, char** v) {
     struct tty_settings settings;
     settings.terminal = "xterm-256color";
 
-    pt = startTerminal(settings);
+    pt = start_terminal(settings);
     if (pt.master < 0) return -1;
 
     int term_fd = open("terminal_out.txt", O_WRONLY | O_CREAT | O_TRUNC);
@@ -70,9 +70,9 @@ int route(struct request req) {
         }
         if (req.payload != NULL) {
             if (strcmp("newline", req.payload) == 0) {
-                writeTerminal("\n", 1, pt);
+                write_terminal("\n", 1, pt);
             } else {
-                writeTerminal(req.payload, req.payload_size, pt);
+                write_terminal(req.payload, req.payload_size, pt);
             }
 
             http_code(req.fd, 200);

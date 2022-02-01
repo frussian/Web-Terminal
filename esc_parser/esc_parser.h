@@ -95,9 +95,9 @@ struct esc_parser {
 };
 
 void clear_style(struct style *s);
-int styleIsEmpty(struct style *s);
+int style_is_empty(struct style *s);
 int style_equal(struct style *s1, struct style *s2);
-void parseEsc(struct esc_parser*, char);   //TODO: remove from header
+void parse_esc(struct esc_parser *pars, char c);   //TODO: remove from header
 int init_parser(struct esc_parser *parser);
 
 #endif //WEBTERMINAL_ESC_PARSER_H

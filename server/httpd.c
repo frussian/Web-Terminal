@@ -97,7 +97,7 @@ void serve_forever(int port, struct tty *pt) {
                     nfds++;
                 } while (new_sd != -1);
             } else if (fds[i].fd == pt->master) {
-                rc = readTerminal(pt);
+                rc = read_terminal(pt);
                 if (rc != 0) {
                     fprintf(stderr, "read terminal error %d\n", rc);
                 }

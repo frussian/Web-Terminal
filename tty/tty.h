@@ -14,7 +14,6 @@ struct tty {
     int term_log_fd;
     char *buf;
     size_t size;
-    char changed;
     int rawStart;
     struct esc_parser pars;
     struct character current_char;
@@ -27,10 +26,9 @@ struct tty_settings {
     char *terminal;
 };
 
-struct tty startTerminal(struct tty_settings);
-int writeTerminal(char*, size_t, struct tty);
-char *getBuf(struct tty);
-int readTerminal(struct tty *pt);
-int parseTerminal(struct tty *pt);
+struct tty start_terminal(struct tty_settings settings);
+int write_terminal(char *data, size_t len, struct tty pt);
+int read_terminal(struct tty *pt);
+int parse_terminal(struct tty *pt);
 
 #endif //WEBTERMINAL_TTY_H

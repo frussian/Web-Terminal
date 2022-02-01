@@ -55,14 +55,14 @@ uint32_t validate_utf8(uint32_t *state, char *str, size_t len) {
     return *state;
 }
 
-void clearChar(struct character *c) {
+void clear_char(struct character *c) {
     c->size = 0;
     for (int i = 0; i < 4; i++) {
         c->c[i] = 0;
     }
 }
 
-struct tty startTerminal(struct tty_settings settings) {
+struct tty start_terminal(struct tty_settings settings) {
     struct tty pt;
     int master = posix_openpt(O_RDWR); //TODO: set O_NOCTTY?
     if (master < 0) {
@@ -82,11 +82,10 @@ struct tty startTerminal(struct tty_settings settings) {
         exit(1);
     }
 
-    pt.changed = 1;
     pt.esc_seq = 0;
 
     pt.utf8_state = UTF8_ACCEPT;
-    clearChar(&pt.current_char);
+    clear_char(&pt.current_char);
 
     if (init_parser(&pt.pars) < 0) {
         fprintf(stderr, "cannot init parser: malloc");
@@ -160,23 +159,11 @@ struct tty startTerminal(struct tty_settings settings) {
     return pt;
 }
 
-int writeTerminal(char *data, size_t len, struct tty pt) {
+int write_terminal(char *data, size_t len, struct tty pt) {
     return write(pt.master, data, len);
 }
 
-int checkZeros(char *buf, size_t size) {
-
-}
-
-struct character *appendChars(const struct character *s1, int len1, const struct character *s2, int len2) {
-    struct character *new = realloc((void*)s1, sizeof(struct character) * (len1 + len2));
-    if (new == NULL) return NULL;
-
-    memcpy((new + len1), s2, sizeof(struct character) * len2);
-    return new;
-}
-
-int parseTerminal(struct tty *pt) {
+int parse_terminal(struct tty *pt) {
     char *buf = pt->buf;
     int i = pt->rawStart;
     size_t size = pt->size;
@@ -192,7 +179,7 @@ int parseTerminal(struct tty *pt) {
             } else {
                 fprintf(stderr, "%c\n", c);
             }
-            parseEsc(&pt->pars, c);
+            parse_esc(&pt->pars, c);
             if (!pt->pars.ended) continue;
             pt->pars.ended = 0;
             pt->esc_seq = 0;
@@ -342,24 +329,22 @@ int parseTerminal(struct tty *pt) {
             validate_utf8(&pt->utf8_state, &c, 1);
             if (pt->utf8_state == UTF8_REJECT) {
                 fprintf(stderr, "symbol %d is not valid\n", *(int*)pt->current_char.c);
-                clearChar(&pt->current_char);
+                clear_char(&pt->current_char);
                 pt->utf8_state = UTF8_ACCEPT;
             } else if (pt->utf8_state == UTF8_ACCEPT) {
                 pt->current_char.s = current_style;
                 add_char(&pt->ed, pt->current_char);
-                clearChar(&pt->current_char);
+                clear_char(&pt->current_char);
             } else {
                 fprintf(stderr, "needs more characters\n");
             }
         }
     }
 
-//    pt->rawStart = size; todo: не нужно?
-
     return 0;
 }
 
-int readTerminal(struct tty *pt) {
+int read_terminal(struct tty *pt) {
     size_t size = 256, sum = 0;
     char *data = malloc(size);
     while (1) {
@@ -374,7 +359,6 @@ int readTerminal(struct tty *pt) {
         }
     }
 
-//    fprintf(stderr, "sum = %zu\n", sum);
     if (sum != 0) {
         if (data == NULL) {
             fprintf(stderr, "problem with realloc1\n");
@@ -395,7 +379,7 @@ int readTerminal(struct tty *pt) {
 
     free(data);
 
-    int res = parseTerminal(pt);
+    int res = parse_terminal(pt);
     if (res < 0) {
         fprintf(stderr, "\x1b[32mparse error\x1b[0m\n");
         return res;

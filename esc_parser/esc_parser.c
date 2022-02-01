@@ -16,7 +16,7 @@ void clear_style(struct style *s) {
     s->changed = 0;
 }
 
-int styleIsEmpty(struct style *s) {
+int style_is_empty(struct style *s) {
     return !s->underline && !s->italic && !s->fColor &&
            !s->bold && !s->bColor;
 }
@@ -54,7 +54,7 @@ int init_parser(struct esc_parser *parser) {
 int update_digit(struct esc_parser *pars, char c);
 void inc_digits(struct esc_parser *pars);
 
-void parseEsc(struct esc_parser *pars, char c) {
+void parse_esc(struct esc_parser *pars, char c) {
 
     switch (pars->state) {
         //start
@@ -107,7 +107,7 @@ void parseEsc(struct esc_parser *pars, char c) {
                 pars->ended = 1;
             } else {
                 pars->state = 1;
-                parseEsc(pars, c);
+                parse_esc(pars, c);
             }
             break;
         }
@@ -521,7 +521,7 @@ void parseEsc(struct esc_parser *pars, char c) {
                 pars->ended = 1;
             } else {
                 pars->state = 1;
-                parseEsc(pars, c);
+                parse_esc(pars, c);
             }
         }
         case 5: {
