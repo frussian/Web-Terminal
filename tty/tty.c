@@ -182,7 +182,7 @@ int parseTerminal(struct tty *pt) {
     size_t size = pt->size;
 
     struct style current_style;
-    clearStyle(&current_style);
+    clear_style(&current_style);
 
     for (; i < size; i++) {
         char c = buf[i];
@@ -227,7 +227,7 @@ int parseTerminal(struct tty *pt) {
                     break;
                 }
                 case RESET_STYLE: {
-                    clearStyle(&current_style);
+                    clear_style(&current_style);
                     update_style(&pt->ed, current_style);
                     break;
                 }
@@ -305,6 +305,18 @@ int parseTerminal(struct tty *pt) {
                 }
                 case DELETE_N_CHARS_RIGHT_FROM_CURSOR_WITH_SHIFT: {
                     delete_n_chars_right_from_cursor_with_shift(&pt->ed, res.cursor.column);
+                    break;
+                }
+                case ROW_MARGINS: {
+                    set_row_margins(&pt->ed, res.margins[1], res.margins[0]);
+                    break;
+                }
+                case INDEX: {
+                    check_index(&pt->ed);
+                    break;
+                }
+                case REVERSE_INDEX: {
+                    check_reverse_index(&pt->ed);
                     break;
                 }
                 default: {

@@ -28,6 +28,8 @@ struct editor {
     int alt_buf;
     size_t rows_num;
     size_t cols_num;
+    int bottom_margin; //scroll region
+    int top_margin;
     int showed_cur;
     struct style curr_style;
 };
@@ -43,6 +45,10 @@ void set_cy(struct editor *ed, int cy);
 void set_cx_cy(struct editor *ed, int cx, int cy);
 void add_cx(struct editor *ed, int offset);
 void add_cy(struct editor *ed, int offset);
+void set_row_margins(struct editor *ed, int top, int bottom);
+
+void check_index(struct editor *ed);
+void check_reverse_index(struct editor *ed);
 
 void erase_visible_screen(struct editor *ed);
 void erase_n_chars_from_screen(struct editor *ed, size_t n);

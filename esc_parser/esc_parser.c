@@ -10,7 +10,7 @@
 
 //struct esc parseEsc(const char *, size_t, int *);
 
-void clearStyle(struct style *s) {
+void clear_style(struct style *s) {
     s->underline = 0;
     s->italic = 0;
     s->fColor = NULL;
@@ -23,7 +23,7 @@ int styleIsEmpty(struct style *s) {
            !s->bold && !s->bColor;
 }
 
-int styleEqual(struct style *s1, struct style *s2) {
+int style_equal(struct style *s1, struct style *s2) {
     return s1->underline == s2->underline &&
            s1->italic == s2->italic &&
            s1->bold == s2->bold &&
@@ -37,11 +37,13 @@ int init_parser(struct esc_parser *parser) {
     parser->ended = 0;
 
     parser->res.code = ERROR;
-    clearStyle(&parser->res.s);
+    clear_style(&parser->res.s);
     parser->res.cursor.column = 0; //0 is absence of field
     parser->res.cursor.line = 0;   //coordinates start from 1
     parser->res.alt_buf_clear_on_enter = 0;
     parser->res.alt_buf_clear_on_exit = 0;
+    parser->res.margins[0] = 0;
+    parser->res.margins[1] = 0;
 
     parser->digitsNum = 0;
     parser->currentDigitPos = 0;
@@ -65,6 +67,12 @@ void parseEsc(struct esc_parser *pars, char c) {
                 pars->state = 5;
             } else if (c == ']') {
                 pars->state = 6;
+            } else if (c == 'D') {
+                pars->res.code = INDEX;
+                pars->ended = 1;
+            } else if (c == 'M') {
+                pars->res.code = REVERSE_INDEX;
+                pars->ended = 1;
             } else {
                 pars->ended = 1;
                 pars->res.code = NOT_SUPPORTED;
@@ -102,7 +110,6 @@ void parseEsc(struct esc_parser *pars, char c) {
                 pars->res.code = CLEAR_CUR_TO_END_OF_LINE;
                 pars->ended = 1;
             } else {
-                //TODO: or state = 1?  //for move cursor without parameters
                 pars->state = 1;
                 parseEsc(pars, c);
             }
@@ -284,7 +291,8 @@ void parseEsc(struct esc_parser *pars, char c) {
                             } else if (strcmp(pars->digits[n], "32") == 0) {
                                 pars->res.code = STYLE;
                                 pars->res.s.fColor = "green";
-                            } else if (strcmp(pars->digits[n], "33") == 0) {
+                            } else if (strcmp(pars->digits[n], "33") == 0 ||
+                                    strcmp(pars->digits[n], "93") == 0) {
                                 pars->res.code = STYLE;
                                 pars->res.s.fColor = "yellow";
                             } else if (strcmp(pars->digits[n], "34") == 0) {
@@ -368,6 +376,19 @@ void parseEsc(struct esc_parser *pars, char c) {
                             pars->res.cursor.column = col;
                         } else {
                             pars->res.cursor.column = 1;
+                        }
+                        pars->ended = 1;
+                        break;
+                    }
+                    case 'r': {
+                        pars->res.code = ROW_MARGINS;
+                        if (pars->digitsNum > 0) {
+                            long top = strtol(pars->digits[0], NULL, 10);
+                            pars->res.margins[1] = top;
+                        }
+                        if (pars->digitsNum > 1) {
+                            long bottom = strtol(pars->digits[1], NULL, 10);
+                            pars->res.margins[0] = bottom;
                         }
                         pars->ended = 1;
                         break;

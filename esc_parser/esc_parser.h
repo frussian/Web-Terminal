@@ -40,6 +40,9 @@
 #define AUTO_WRAP_OFF 29
 #define MOVE_CUR_ABS 30
 #define DELETE_N_CHARS_RIGHT_FROM_CURSOR_WITH_SHIFT 31  //ESC[amount P
+#define ROW_MARGINS 32 //ESC[top;bottom r
+#define INDEX 33 //ESC[D
+#define REVERSE_INDEX 34 //ESC[M
 #define NOT_SUPPORTED 100
 
 struct style {
@@ -65,6 +68,7 @@ struct esc {
     struct moveCursor cursor;
     int alt_buf_clear_on_enter;
     int alt_buf_clear_on_exit;
+    int margins[2];
 };
 
 #define MAX_DIGITS 6
@@ -82,9 +86,9 @@ struct esc_parser {
     struct abuf text;
 };
 
-void clearStyle(struct style *s);
+void clear_style(struct style *s);
 int styleIsEmpty(struct style *s);
-int styleEqual(struct style *s1, struct style *s2);
+int style_equal(struct style *s1, struct style *s2);
 void parseEsc(struct esc_parser*, char);   //TODO: remove from header
 int init_parser(struct esc_parser *parser);
 
