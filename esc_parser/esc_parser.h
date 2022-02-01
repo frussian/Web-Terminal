@@ -39,10 +39,12 @@
 #define AUTO_WRAP_ON 28
 #define AUTO_WRAP_OFF 29
 #define MOVE_CUR_ABS 30
-#define DELETE_N_CHARS_RIGHT_FROM_CURSOR_WITH_SHIFT 31  //ESC[amount P
-#define ROW_MARGINS 32 //ESC[top;bottom r
+#define DELETE_N_CHARS_RIGHT_FROM_CURSOR_WITH_SHIFT 31  //ESC[{amount} P
+#define ROW_MARGINS 32 //ESC[{top};{bottom} r
 #define INDEX 33 //ESC[D
 #define REVERSE_INDEX 34 //ESC[M
+#define SCROLL_UP 35 //ESC[{amount} T
+#define SCROLL_DOWN 36 //ESC[{amount} T
 #define NOT_SUPPORTED 100
 
 //bitmask
@@ -77,6 +79,7 @@ struct esc {
     int alt_buf_clear_on_enter;
     int alt_buf_clear_on_exit;
     int margins[2];
+    int scroll_num;
 };
 
 #define MAX_DIGITS 6

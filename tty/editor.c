@@ -37,6 +37,8 @@ int init_screen(size_t rows_num, size_t cols_num, struct screen *scr) {
     scr->cx = 0;
     scr->cy = 0;
     scr->rows = rows;
+    scr->top_margin = 0;
+    scr->bottom_margin = rows_num-1;
     if (err == 0) return 0;
 
     for (int i = 0; i < row_num; i++) {
@@ -49,8 +51,6 @@ int init_screen(size_t rows_num, size_t cols_num, struct screen *scr) {
 int init_editor(struct editor *ed) {
     ed->rows_num = 24;
     ed->cols_num = 80;
-    ed->top_margin = 0;
-    ed->bottom_margin = ed->rows_num-1;
     int res = init_screen(ed->rows_num, ed->cols_num, &ed->screens[0]);
     if (res < 0) {
         return res;
@@ -116,6 +116,8 @@ void add_cy(struct editor *ed, int offset) {
 }
 
 void set_row_margins(struct editor *ed, int top, int bottom) {
+    struct screen *scr = &ed->screens[ed->alt_buf];
+
     if (bottom == 0 || bottom >= ed->rows_num) {
         bottom = ed->rows_num - 1;
     }
@@ -123,19 +125,17 @@ void set_row_margins(struct editor *ed, int top, int bottom) {
         top = 1;
     }
     if (top < bottom && bottom < ed->cols_num) {
-        ed->top_margin = top-1;
-        ed->bottom_margin = bottom-1;
+        scr->top_margin = top-1;
+        scr->bottom_margin = bottom-1;
     } else {
-        ed->top_margin = 0;
-        ed->bottom_margin = ed->rows_num-1;
+        scr->top_margin = 0;
+        scr->bottom_margin = ed->rows_num-1;
     }
 }
 
-void scroll_up_screen(struct editor *ed, size_t n);
-
 void check_index(struct editor *ed) {
     struct screen *scr = &ed->screens[ed->alt_buf];
-    if (scr->cy != ed->bottom_margin) {
+    if (scr->cy != scr->bottom_margin) {
         scr->cy++;
         //TODO: check rows_num?
         return;
@@ -144,11 +144,9 @@ void check_index(struct editor *ed) {
     scroll_up_screen(ed, 1);
 }
 
-void scroll_down_screen(struct editor *ed, size_t n);
-
 void check_reverse_index(struct editor *ed) {
     struct screen *scr = &ed->screens[ed->alt_buf];
-    if (scr->cy != ed->top_margin) {
+    if (scr->cy != scr->top_margin) {
         scr->cy--;
         scr->cy = scr->cy >= 0 ? scr->cy : 0;
         //TODO: check negative value?
@@ -232,7 +230,7 @@ void dump_screen(struct editor *ed, int n, FILE *file) {
     struct screen *scr = &ed->screens[n];
     struct style curr_style = scr->rows[0][0].s;
 
-    fprintf(file, "cx = %d, cy = %d\n", scr->cx, scr->cy);
+    fprintf(file, "cx = %d, cy = %d\ntop margin = %d, bottom margin = %d\n", scr->cx, scr->cy, scr->top_margin, scr->bottom_margin);
 
     for (int i = 0; i < ed->rows_num; i++) {
         for (int j = 0; j < ed->cols_num; j++) {
@@ -265,8 +263,8 @@ void dump_screen(struct editor *ed, int n, FILE *file) {
 
 void dump_editor(struct editor *ed) {
     FILE *file = stdout;
-    fprintf(stderr, "editor:\nrows = %zu columns = %zu\ntop margin = %d, bottom margin = %d\naltbuf %d\n",
-            ed->rows_num, ed->cols_num, ed->top_margin, ed->bottom_margin, ed->alt_buf);
+    fprintf(stderr, "editor:\nrows = %zu columns = %zu\naltbuf %d\n",
+            ed->rows_num, ed->cols_num, ed->alt_buf);
     fprintf(stderr, "config:\nauto_wrap %d, irm %d, visible cursor %d\n", ed->conf.auto_wrap, ed->conf.irm, ed->conf.visible_cur);
     fprintf(file, "main screen:\n");
     dump_screen(ed, 0, file);
@@ -282,15 +280,15 @@ void init_row(struct char_row* r) {
 void scroll_up_screen(struct editor *ed, size_t n) {
     struct screen *scr = &ed->screens[ed->alt_buf];
     int cy = scr->cy;
-    printf("scrolling up %d %d\n", ed->top_margin, ed->bottom_margin);
-    for (int i = ed->top_margin; i < n + ed->top_margin; i++) {
+    printf("scrolling up %d %d\n", scr->top_margin, scr->bottom_margin);
+    for (int i = scr->top_margin; i < n + scr->top_margin; i++) {
         free(scr->rows[i]);
     }
-    for (int i = ed->top_margin; i <= ed->bottom_margin - n; i++) {
+    for (int i = scr->top_margin; i <= scr->bottom_margin - n; i++) {
         printf("swapping %d <- %d\n", i, i+n);
         scr->rows[i] = scr->rows[i+n];
     }
-    for (int i = ed->bottom_margin-n+1; i <= ed->bottom_margin; i++) {
+    for (int i = scr->bottom_margin-n+1; i <= scr->bottom_margin; i++) {
         scr->cy = i;
         scr->rows[i] = malloc(ed->cols_num * sizeof(struct character));
         fill_spaces(ed, 0, ed->cols_num);
@@ -301,16 +299,16 @@ void scroll_up_screen(struct editor *ed, size_t n) {
 void scroll_down_screen(struct editor *ed, size_t n) {
     struct screen *scr = &ed->screens[ed->alt_buf];
     int cy = scr->cy;
-    printf("scrolling down %d %d\n", ed->top_margin, ed->bottom_margin);
-    for (int i = ed->bottom_margin-n+1; i <= ed->bottom_margin; i++) {
+    printf("scrolling down %d %d\n", scr->top_margin, scr->bottom_margin);
+    for (int i = scr->bottom_margin-n+1; i <= scr->bottom_margin; i++) {
         free(scr->rows[i]);
     }
-    for (int i = ed->bottom_margin; i >= ed->top_margin+n; i--) {
+    for (int i = scr->bottom_margin; i >= scr->top_margin+n; i--) {
         printf("swapping %d <- %d\n", i, i-n);
         scr->rows[i] = scr->rows[i-n];
     }
 
-    for (int i = ed->top_margin; i < ed->top_margin + n; i++) {
+    for (int i = scr->top_margin; i < scr->top_margin + n; i++) {
         scr->cy = i;
         scr->rows[i] = malloc(ed->cols_num * sizeof(struct character));
         fill_spaces(ed, 0, ed->cols_num);
@@ -351,13 +349,13 @@ void insert_char(struct editor *ed, struct character c) {
         if (ed->conf.auto_wrap) {//TODO: на самом деле что-то посложнее
             scr->cy++;
             scr->cx = 0;
-            if (scr->cy > ed->bottom_margin) {
+            if (scr->cy > scr->bottom_margin) {
                 scroll_up_screen(ed, 1);
             }
         } else {
             scr->cy++;
             scr->cx = 0;
-            if (scr->cy > ed->bottom_margin) {
+            if (scr->cy > scr->bottom_margin) {
                 scroll_up_screen(ed, 1);
             }
         }
@@ -378,7 +376,7 @@ void add_char(struct editor *ed, struct character c) {
         scr->cy++;
         scr->cx = 0;
         printf("newline scroll");
-        if (scr->cy > ed->bottom_margin) {
+        if (scr->cy > scr->bottom_margin) {
             scroll_up_screen(ed, 1);
         }
         return;

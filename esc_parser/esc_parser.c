@@ -42,6 +42,7 @@ int init_parser(struct esc_parser *parser) {
     parser->res.alt_buf_clear_on_exit = 0;
     parser->res.margins[0] = 0;
     parser->res.margins[1] = 0;
+    parser->res.scroll_num = 0;
 
     parser->digitsNum = 0;
     parser->currentDigitPos = 0;
@@ -426,6 +427,31 @@ void parse_esc(struct esc_parser *pars, char c) {
                         pars->ended = 1;
                         break;
                     }
+                    case 'S': {
+                        pars->res.code = SCROLL_UP;
+                        if (pars->digitsNum > 0) {
+                            long num = strtol(pars->digits[0], NULL, 10);
+                            pars->res.scroll_num = num;
+                        } else {
+                            pars->res.code = ERROR;
+                            fprintf(stderr, "absent amount of scroll up rows\n");
+                        }
+                        pars->ended = 1;
+                        break;
+                    }
+                    case 'T': {
+                        pars->res.code = SCROLL_DOWN;
+                        if (pars->digitsNum > 0) {
+                            long num = strtol(pars->digits[0], NULL, 10);
+                            pars->res.scroll_num = num;
+                        } else {
+                            pars->res.code = ERROR;
+                            fprintf(stderr, "absent amount of scroll down rows\n");
+                        }
+                        pars->ended = 1;
+                        break;
+                    }
+
 
                     default: {
                         pars->res.code = NOT_SUPPORTED;

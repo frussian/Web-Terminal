@@ -306,6 +306,16 @@ int parse_terminal(struct tty *pt) {
                     check_reverse_index(&pt->ed);
                     break;
                 }
+                case SCROLL_UP: {
+                    int amount = res.scroll_num == 0 ? 1 : res.scroll_num;
+                    scroll_up_screen(&pt->ed, amount);
+                    break;
+                }
+                case SCROLL_DOWN: {
+                    int amount = res.scroll_num == 0 ? 1 : res.scroll_num;
+                    scroll_down_screen(&pt->ed, amount);
+                    break;
+                }
                 default: {
                     fprintf(stderr, "ignoring res.code = %d\n", res.code);
                 }
