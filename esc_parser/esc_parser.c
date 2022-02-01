@@ -4,11 +4,8 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <unistd.h>
 #include <esc_parser.h>
-#include "../tty/tty.h"
 
-//struct esc parseEsc(const char *, size_t, int *);
 
 void clear_style(struct style *s) {
     s->underline = 0;
@@ -86,14 +83,12 @@ void parseEsc(struct esc_parser *pars, char c) {
                 pars->ended = 1;
             } else if (c == '6') {
                 pars->state = 4;
-                //TODO: save digit
                 pars->digits[pars->digitsNum][pars->currentDigitPos] = c;
                 pars->currentDigitPos++;
             } else if (c >= '0' && c <= '9') {
                 pars->state = 1;
                 pars->digits[pars->digitsNum][pars->currentDigitPos] = c;
                 pars->currentDigitPos++;
-                //TODO: save digit
             } else if (c == '=') {
                 pars->state = 2;
             } else if (c == '?') {

@@ -69,13 +69,16 @@ int init_editor(struct editor *ed) {
 }
 
 void set_cx(struct editor *ed, int cx) {
-    if (cx == 0) return;
+    if (cx == 0) cx = 1;
+    if (cx > ed->cols_num) {
+        cx = ed->cols_num;
+    }
     ed->screens[ed->alt_buf].cx = cx - 1;
 }
 
 void set_cy(struct editor *ed, int cy) {
     if (cy == 0) cy = 1;
-    if (cy >= ed->rows_num) {
+    if (cy > ed->rows_num) {
         cy = ed->rows_num;
     }
     ed->screens[ed->alt_buf].cy = cy - 1;
@@ -89,21 +92,27 @@ void set_cx_cy(struct editor *ed, int cx, int cy) {
 }
 
 void add_cx(struct editor *ed, int offset) {
-    ed->screens[ed->alt_buf].cx += offset;
-    if (ed->screens[ed->alt_buf].cx < 0) {
-        ed->screens[ed->alt_buf].cx = 0;
+    struct screen *scr = &ed->screens[ed->alt_buf];
+    scr->cx += offset;
+    if (scr->cx < 0) {
+        scr->cx = 0;
     }
-
+    if (scr->cx >= ed->cols_num) {
+        scr->cx = ed->cols_num - 1;
+    }
     //todo: check right margin
 }
 
 void add_cy(struct editor *ed, int offset) {
-    ed->screens[ed->alt_buf].cy += offset;
-    if (ed->screens[ed->alt_buf].cy < 0) {
-        ed->screens[ed->alt_buf].cy = 0;
+    struct screen *scr = &ed->screens[ed->alt_buf];
+    scr->cy += offset;
+    if (scr->cy < 0) {
+        scr->cy = 0;
+    }
+    if (scr->cy >= ed->rows_num) {
+        scr->cy = ed->rows_num - 1;
     }
 
-    //todo: check bottom margin
 }
 
 void set_row_margins(struct editor *ed, int top, int bottom) {
@@ -223,6 +232,8 @@ void dump_screen(struct editor *ed, int n, FILE *file) {
     struct screen *scr = &ed->screens[n];
     struct style curr_style = scr->rows[0][0].s;
 
+    fprintf(file, "cx = %d, cy = %d\n", scr->cx, scr->cy);
+
     for (int i = 0; i < ed->rows_num; i++) {
         for (int j = 0; j < ed->cols_num; j++) {
             struct character c = scr->rows[i][j];
@@ -254,9 +265,12 @@ void dump_screen(struct editor *ed, int n, FILE *file) {
 
 void dump_editor(struct editor *ed) {
     FILE *file = stdout;
-    fprintf(file, "main screen\n");
+    fprintf(stderr, "editor:\nrows = %zu columns = %zu\ntop margin = %d, bottom margin = %d\naltbuf %d\n",
+            ed->rows_num, ed->cols_num, ed->top_margin, ed->bottom_margin, ed->alt_buf);
+    fprintf(stderr, "config:\nauto_wrap %d, irm %d, visible cursor %d\n", ed->conf.auto_wrap, ed->conf.irm, ed->conf.visible_cur);
+    fprintf(file, "main screen:\n");
     dump_screen(ed, 0, file);
-    fprintf(file, "alternate screen\n");
+    fprintf(file, "alternate screen:\n");
     dump_screen(ed, 1, file);
 }
 
@@ -341,8 +355,8 @@ void insert_char(struct editor *ed, struct character c) {
                 scroll_up_screen(ed, 1);
             }
         } else {
-            scr->cx = 0;
             scr->cy++;
+            scr->cx = 0;
             if (scr->cy > ed->bottom_margin) {
                 scroll_up_screen(ed, 1);
             }
@@ -351,7 +365,6 @@ void insert_char(struct editor *ed, struct character c) {
 }
 
 void add_char(struct editor *ed, struct character c) {
-    //todo: check \r
     struct screen *scr = &ed->screens[ed->alt_buf];
     c.s = ed->curr_style;
     if (scr->cx >= ed->cols_num) {
@@ -364,6 +377,7 @@ void add_char(struct editor *ed, struct character c) {
     if (c.size == 1 && c.c[0] == '\n') {
         scr->cy++;
         scr->cx = 0;
+        printf("newline scroll");
         if (scr->cy > ed->bottom_margin) {
             scroll_up_screen(ed, 1);
         }
@@ -465,7 +479,7 @@ char *getHTML(struct editor *ed, int *len) {
         for (int j = 0; j < ed->cols_num; j++) {
             struct character c = row[j];
             if (i == scr->cy && j == scr->cx && ed->conf.visible_cur && !ed->showed_cur) {
-//                printf("%d %d\n", scr->cx, scr->cy);
+                printf("cursor: %d %d\n", scr->cx, scr->cy);
                 if (!ed->showed_cur) {
                     c.s.underline = 1;
                     ed->showed_cur = 1;
