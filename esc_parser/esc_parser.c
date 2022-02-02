@@ -451,8 +451,30 @@ void parse_esc(struct esc_parser *pars, char c) {
                         pars->ended = 1;
                         break;
                     }
-
-
+                    case 'L': {
+                        pars->res.code = INSERT_LINE;
+                        if (pars->digitsNum > 0) {
+                            long num = strtol(pars->digits[0], NULL, 10);
+                            pars->res.scroll_num = num;
+                        } else {
+                            pars->res.code = ERROR;
+                            fprintf(stderr, "absent amount of insert line\n");
+                        }
+                        pars->ended = 1;
+                        break;
+                    }
+                    case 'M': {
+                        pars->res.code = DELETE_LINE;
+                        if (pars->digitsNum > 0) {
+                            long num = strtol(pars->digits[0], NULL, 10);
+                            pars->res.scroll_num = num;
+                        } else {
+                            pars->res.code = ERROR;
+                            fprintf(stderr, "absent amount of delete line\n");
+                        }
+                        pars->ended = 1;
+                        break;
+                    }
                     default: {
                         pars->res.code = NOT_SUPPORTED;
                         pars->ended = 1;

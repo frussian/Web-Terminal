@@ -73,6 +73,9 @@ void set_cx(struct editor *ed, int cx) {
     if (cx > ed->cols_num) {
         cx = ed->cols_num;
     }
+    if (cx == 80) {
+        dump_editor(ed);
+    }
     ed->screens[ed->alt_buf].cx = cx - 1;
 }
 
@@ -280,14 +283,14 @@ void init_row(struct char_row* r) {
     r->row_size = 0;
 }
 
-void scroll_up_screen(struct editor *ed, size_t n) {
+void scroll_up_from_pos_screen(struct editor *ed, int pos, size_t n) {
     struct screen *scr = &ed->screens[ed->alt_buf];
     int cy = scr->cy;
     printf("scrolling up %d %d\n", scr->top_margin, scr->bottom_margin);
-    for (int i = scr->top_margin; i < n + scr->top_margin; i++) {
+    for (int i = pos; i < n + pos; i++) {
         free(scr->rows[i]);
     }
-    for (int i = scr->top_margin; i <= scr->bottom_margin - n; i++) {
+    for (int i = pos; i <= scr->bottom_margin - n; i++) {
         printf("swapping %d <- %d\n", i, i+n);
         scr->rows[i] = scr->rows[i+n];
     }
@@ -299,24 +302,56 @@ void scroll_up_screen(struct editor *ed, size_t n) {
     scr->cy = cy;
 }
 
-void scroll_down_screen(struct editor *ed, size_t n) {
+void delete_lines(struct editor *ed, size_t n) {
+    struct screen *scr = &ed->screens[ed->alt_buf];
+    if (scr->cy < scr->top_margin || scr->cy > scr->bottom_margin) {
+        return;
+    }
+    if (scr->bottom_margin - scr->cy + 1 < n) {
+        n = scr->bottom_margin - scr->cy + 1;
+    }
+    scroll_up_from_pos_screen(ed, scr->cy, n);
+}
+
+void scroll_up_screen(struct editor *ed, size_t n) {
+    struct screen *scr = &ed->screens[ed->alt_buf];
+    scroll_up_from_pos_screen(ed, scr->top_margin, n);
+}
+
+void scroll_down_from_pos_screen(struct editor *ed, int pos, size_t n) {
     struct screen *scr = &ed->screens[ed->alt_buf];
     int cy = scr->cy;
     printf("scrolling down %d %d\n", scr->top_margin, scr->bottom_margin);
     for (int i = scr->bottom_margin-n+1; i <= scr->bottom_margin; i++) {
         free(scr->rows[i]);
     }
-    for (int i = scr->bottom_margin; i >= scr->top_margin+n; i--) {
+    for (int i = scr->bottom_margin; i >= pos + n; i--) {
         printf("swapping %d <- %d\n", i, i-n);
         scr->rows[i] = scr->rows[i-n];
     }
 
-    for (int i = scr->top_margin; i < scr->top_margin + n; i++) {
+    for (int i = pos; i < pos + n; i++) {
         scr->cy = i;
         scr->rows[i] = malloc(ed->cols_num * sizeof(struct character));
         fill_spaces(ed, 0, ed->cols_num);
     }
     scr->cy = cy;
+}
+
+void insert_lines(struct editor *ed, int n) {
+    struct screen *scr = &ed->screens[ed->alt_buf];
+    if (scr->cy < scr->top_margin || scr->cy > scr->bottom_margin) {
+        return;
+    }
+    if (scr->bottom_margin - scr->cy + 1 < n) {
+        n = scr->bottom_margin - scr->cy + 1;
+    }
+    scroll_down_from_pos_screen(ed, scr->cy, n);
+}
+
+void scroll_down_screen(struct editor *ed, size_t n) {
+    struct screen *scr = &ed->screens[ed->alt_buf];
+    scroll_down_from_pos_screen(ed, scr->top_margin, n);
 }
 
 void irm_insert_char(struct editor *ed, struct character c) {

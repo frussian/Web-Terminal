@@ -316,6 +316,14 @@ int parse_terminal(struct tty *pt) {
                     scroll_down_screen(&pt->ed, amount);
                     break;
                 }
+                case INSERT_LINE: {
+                    insert_lines(&pt->ed, res.scroll_num);
+                    break;
+                }
+                case DELETE_LINE: {
+                    delete_lines(&pt->ed, res.scroll_num);
+                    break;
+                }
                 default: {
                     fprintf(stderr, "ignoring res.code = %d\n", res.code);
                 }

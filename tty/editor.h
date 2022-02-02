@@ -51,6 +51,8 @@ void check_index(struct editor *ed);
 void check_reverse_index(struct editor *ed);
 void scroll_up_screen(struct editor *ed, size_t n);
 void scroll_down_screen(struct editor *ed, size_t n);
+void delete_lines(struct editor *ed, size_t n);
+void insert_lines(struct editor *ed, int n);
 
 void erase_visible_screen(struct editor *ed);
 void erase_n_chars_from_screen(struct editor *ed, size_t n);

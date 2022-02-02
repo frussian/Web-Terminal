@@ -43,8 +43,10 @@
 #define ROW_MARGINS 32 //ESC[{top};{bottom} r
 #define INDEX 33 //ESC[D
 #define REVERSE_INDEX 34 //ESC[M
-#define SCROLL_UP 35 //ESC[{amount} T
+#define SCROLL_UP 35 //ESC[{amount} S
 #define SCROLL_DOWN 36 //ESC[{amount} T
+#define INSERT_LINE 37 //ESC[{amount} L
+#define DELETE_LINE 38 //ESC[{amount} M
 #define NOT_SUPPORTED 100
 
 //bitmask
