@@ -552,8 +552,19 @@ char *getHTML(struct editor *ed, int *len) {
 
             }
 
-            html = append(html, sum, c.c, c.size);
-            sum += c.size;
+            if (c.c[0] == '&' && c.size == 1) {
+                html = append(html, sum, "&amp;", 5);
+                sum += 5;
+            } else if (c.c[0] == '<' && c.size == 1) {
+                html = append(html, sum, "&lt;", 4);
+                sum += 4;
+            } else if (c.c[0] == '>' && c.size == 1) {
+                html = append(html, sum, "&gt;", 4);
+                sum += 4;
+            } else {
+                html = append(html, sum, c.c, c.size);
+                sum += c.size;
+            }
 
             if (*c.c == 0) {
                 fprintf(stderr, "found 0 in pt.buf\n");
