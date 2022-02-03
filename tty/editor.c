@@ -64,6 +64,7 @@ int init_editor(struct editor *ed) {
 	ed->conf.visible_cur = 1;
     ed->alt_buf = 0;
     ed->showed_cur = 0;
+    ed->pending_wrap = 0;
     clear_style(&ed->curr_style);
     return 0;
 }
@@ -210,7 +211,6 @@ void delete_n_chars_right_from_cursor_with_shift(struct editor *ed, int n) {
     fill_spaces(ed, ed->cols_num - n, n);
 }
 
-
 void set_alt_buf(struct editor *ed, int alt_buf, int clear) {
     struct screen *scr = &ed->screens[ed->alt_buf];
     scr->top_margin = 0;
@@ -226,6 +226,10 @@ void set_alt_buf(struct editor *ed, int alt_buf, int clear) {
 
 void show_cur(struct editor *ed, int show) {
     ed->conf.visible_cur = show;
+}
+
+void set_auto_wrap(struct editor *ed, int auto_wrap) {
+    ed->conf.auto_wrap = auto_wrap;
 }
 
 void update_style(struct editor *ed, struct style s) {
@@ -276,11 +280,6 @@ void dump_editor(struct editor *ed) {
     dump_screen(ed, 0, file);
     fprintf(file, "alternate screen:\n");
     dump_screen(ed, 1, file);
-}
-
-void init_row(struct char_row* r) {
-    r->chars = NULL;
-    r->row_size = 0;
 }
 
 void scroll_up_from_pos_screen(struct editor *ed, int pos, size_t n) {
@@ -372,9 +371,12 @@ void irm_replace_char(struct editor *ed, struct character c) {
 
 void insert_char(struct editor *ed, struct character c) {
     struct screen *scr = &ed->screens[ed->alt_buf];
-    int cx = scr->cx;
-    int cy = scr->cy;
 
+    if (ed->pending_wrap && ed->conf.auto_wrap) {
+        scr->cx = 0;
+        check_index(ed);
+    }
+    ed->pending_wrap = 0;
 //    fprintf(stderr, "char = %d cx = %d cy = %d\n", c.c[0], cx, cy);
 
     if (ed->conf.irm) {
@@ -383,20 +385,11 @@ void insert_char(struct editor *ed, struct character c) {
         irm_replace_char(ed, c);
     }
 
-    if (cx == ed->cols_num) {
-        if (ed->conf.auto_wrap) {//TODO: на самом деле что-то посложнее
-            scr->cy++;
-            scr->cx = 0;
-            if (scr->cy > scr->bottom_margin) {
-                scroll_up_screen(ed, 1);
-            }
-        } else {
-            scr->cy++;
-            scr->cx = 0;
-            if (scr->cy > scr->bottom_margin) {
-                scroll_up_screen(ed, 1);
-            }
+    if (scr->cx == ed->cols_num) {
+        if (ed->conf.auto_wrap) {
+            ed->pending_wrap = 1;
         }
+        scr->cx--;
     }
 }
 

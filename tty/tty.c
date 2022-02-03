@@ -324,6 +324,14 @@ int parse_terminal(struct tty *pt) {
                     delete_lines(&pt->ed, res.scroll_num);
                     break;
                 }
+                case AUTO_WRAP_ON: {
+                    set_auto_wrap(&pt->ed, 1);
+                    break;
+                }
+                case AUTO_WRAP_OFF: {
+                    set_auto_wrap(&pt->ed, 0);
+                    break;
+                }
                 default: {
                     fprintf(stderr, "ignoring res.code = %d\n", res.code);
                 }
