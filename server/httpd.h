@@ -26,7 +26,7 @@ char header_is_present(const char *name);
 
 int write_header(int fd, const char *k, const char *v);
 
-int write_conn(int fd, const char *data, ...);
+int write_conn(int fd, const char *data);
 
 typedef struct {
     char *name, *value;

@@ -354,25 +354,12 @@ int respond(int fd) {
     return conn;
 }
 
-//TODO: make one to use this only for body
-int write_conn(int fd, const char *data, ...) {
-    va_list args;
-    size_t len2 = strlen(data);
-    char buffer[len2 + 64];
-    char *wrbuf = buffer;
-    va_start(args, data);
-    int len = vsprintf(buffer, data, args);
-//    fprintf(stderr, "strlen in write_conn: %d, strlen = %lu\n", len, len2);
-    va_end(args);
-
-    if (len != len2) {
-        wrbuf = data;
-        len = len2;
-    }
+int write_conn(int fd, const char *data) {
+    size_t len = strlen(data);
 
     int sum = 0;
     while (len > 0) {
-        int i = send(fd, wrbuf + sum, len - sum, 0);
+        int i = send(fd, data + sum, len - sum, 0);
         if (i < 1) return -1;
         sum += i;
         len -= i;
