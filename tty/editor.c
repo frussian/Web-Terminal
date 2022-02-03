@@ -515,7 +515,7 @@ char *getHTML(struct editor *ed, int *len) {
         for (int j = 0; j < ed->cols_num; j++) {
             struct character c = row[j];
             if (i == scr->cy && j == scr->cx && ed->conf.visible_cur && !ed->showed_cur) {
-                printf("cursor: %d %d\n", scr->cx, scr->cy);
+//                printf("cursor: %d %d\n", scr->cx, scr->cy);
                 if (!ed->showed_cur) {
                     c.s.underline = 1;
                     ed->showed_cur = 1;
