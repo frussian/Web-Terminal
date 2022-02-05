@@ -141,7 +141,9 @@ void check_index(struct editor *ed) {
     struct screen *scr = &ed->screens[ed->alt_buf];
     if (scr->cy != scr->bottom_margin) {
         scr->cy++;
-        //TODO: check rows_num?
+        if (scr->cy >= ed->rows_num) {
+            scr->cy = ed->rows_num-1;
+        }
         return;
     }
 
@@ -153,7 +155,6 @@ void check_reverse_index(struct editor *ed) {
     if (scr->cy != scr->top_margin) {
         scr->cy--;
         scr->cy = scr->cy >= 0 ? scr->cy : 0;
-        //TODO: check negative value?
         return;
     }
 
@@ -165,7 +166,6 @@ void fill_spaces(struct editor *ed, int pos, size_t size) {
     c.c[0] = ' ';
     c.size = 1;
     c.s = ed->curr_style;
-//    clearStyle(&c.s);
     struct screen *scr = &ed->screens[ed->alt_buf];
     for (int i = pos; i < ed->cols_num && i < pos + size; i++) {
         scr->rows[scr->cy][i] = c;
@@ -372,7 +372,7 @@ void irm_replace_char(struct editor *ed, struct character c) {
 void insert_char(struct editor *ed, struct character c) {
     struct screen *scr = &ed->screens[ed->alt_buf];
 
-    if (ed->pending_wrap && ed->conf.auto_wrap) {
+    if (scr->cx == ed->cols_num - 1 && ed->pending_wrap && ed->conf.auto_wrap) {
         scr->cx = 0;
         check_index(ed);
     }
@@ -396,6 +396,15 @@ void insert_char(struct editor *ed, struct character c) {
 void add_char(struct editor *ed, struct character c) {
     struct screen *scr = &ed->screens[ed->alt_buf];
     c.s = ed->curr_style;
+
+    if (scr->cx < 0) {
+        printf("correcting cx = %d", scr->cx);
+        scr->cx = 0;
+    }
+    if (scr->cy < 0) {
+        printf("correcting cy = %d", scr->cy);
+        scr->cy = 0;
+    }
     if (scr->cx >= ed->cols_num) {
         scr->cx = ed->cols_num-1;
     }
@@ -425,7 +434,7 @@ void add_char(struct editor *ed, struct character c) {
     insert_char(ed, c);
 }
 
-char *generateStyleStr(struct style *s, int *num) {
+char *generate_style_str(struct style *s, int *num) {
     char *buf = NULL;
     int len = 0;
 
@@ -484,21 +493,14 @@ char *generateStyleStr(struct style *s, int *num) {
     return buf;
 }
 
-char *getHTML(struct editor *ed, int *len) {
-    /*if (!pt->changed) {
-        *len = 10;
-        printf("no changes\n");
-        return "no changes";
-    }
-    */
-
+char *get_html(struct editor *ed, int *len) {
     char *html = NULL;
     int sum = 0;
     int i = 0;
 
     struct style s;
-    char *styleStr = NULL;
-    int styleStrLen = 0;
+    char *style_str = NULL;
+    int style_strLen = 0;
     clear_style(&s);
 
     struct screen *scr = &ed->screens[ed->alt_buf];
@@ -520,26 +522,26 @@ char *getHTML(struct editor *ed, int *len) {
             }
 //            fprintf(stderr, "char is %c\n", c.c[0]);
             if (!style_equal(&c.s, &s)) {
-                if (styleStr) {
+                if (style_str) {
                     html = append(html, sum, "</span>", 7);
                     sum += 7;
                 }
 
-                styleStrLen = 0;
+                style_strLen = 0;
 
                 s = c.s;
 
                 if (!style_is_empty(&c.s)) {
-                    styleStr = generateStyleStr(&c.s, &styleStrLen);
-                    if (styleStr < 0) {
+                    style_str = generate_style_str(&c.s, &style_strLen);
+                    if (style_str < 0) {
                         fprintf(stderr, "\x1b[32mnum is negative\x1b[0m\n");
-                        styleStr = 0;
+                        style_str = 0;
                     }
                 }
 
-                if (styleStr) {
-                    html = append(html, sum, styleStr, styleStrLen);
-                    sum += styleStrLen;
+                if (style_str) {
+                    html = append(html, sum, style_str, style_strLen);
+                    sum += style_strLen;
                     //free(styleStr);
                 }
 

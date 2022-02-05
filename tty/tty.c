@@ -133,7 +133,7 @@ struct tty start_terminal(struct tty_settings settings) {
         rc = tcgetattr(slave, &terminalCfg);
 //        cfmakeraw(&terminalCfg);
         terminalCfg.c_lflag &= ~ECHOCTL;
-        terminalCfg.c_lflag |= ECHOE;   //TODO: might be the reason for ]K when delete on ubuntu vt
+        terminalCfg.c_lflag |= ECHOE;
         tcsetattr(slave, TCSANOW, &terminalCfg);
 
         close(STDIN_FILENO);
@@ -209,7 +209,6 @@ int parse_terminal(struct tty *pt) {
                     if (res.s.changed & UNDERLINE) {
                         current_style.underline = res.s.underline;
                     }
-                    printf("style bcolor: %s, fcolor: %s, %s %s\n", current_style.bColor, current_style.fColor, res.s.bColor, res.s.fColor);
                     update_style(&pt->ed, current_style);
                     break;
                 }
@@ -398,9 +397,6 @@ int read_terminal(struct tty *pt) {
        	if (res < 0) {
 		    fprintf(stderr, "error writing, res %d, errno %d", res, errno);
 	    }
-        if (sum == 2) {
-            fprintf(stderr, "%d %d\n", data[0], data[1]);
-        }
     }
 
     free(data);

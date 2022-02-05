@@ -6,11 +6,6 @@
 #define WEBTERMINAL_EDITOR_H
 #include <esc_parser.h>
 
-struct char_row {
-    struct character *chars;
-    size_t row_size;
-};
-
 struct editor_config {
     int irm;            //0 replace, 1 - insert
     int auto_wrap;
@@ -38,7 +33,7 @@ struct editor {
 int init_editor(struct editor *ed);
 void free_editor(struct editor *ed);
 void add_char(struct editor *ed, struct character c);
-char *getHTML(struct editor *ed, int *len);
+char *get_html(struct editor *ed, int *len);
 
 //accepts terminal coordinates (home - 1;1)
 void set_cx(struct editor *ed, int cx);

@@ -37,7 +37,7 @@ int route(struct request req) {
 
     GET("/") {
         int len = 0;
-        char *html = getHTML(&pt.ed, &len);
+        char *html = get_html(&pt.ed, &len);
         if (html == NULL) {
             fprintf(stderr, "html is null\n");
             http_code(req.fd, 500);

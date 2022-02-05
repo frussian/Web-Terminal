@@ -27,7 +27,6 @@ const sendRequest = async (method, body = null, headers = null) => {
 const keyDownHandler = (e) => {
     console.log(e.key, e.ctrlKey, e.code);
     e.preventDefault();
-    const alphanumeric = /^[\p{sc=Latn}\p{sc=Cyrillic}\p{Nd}]+$/u;
 
     if (e.key === "Shift") {
         sendRequest("POST", null, {"X-DUMP-EDITOR": "true"});
@@ -76,7 +75,7 @@ const reqMonitorBuffer = async () => {
 };
 
 reqMonitorBuffer();
-let intervalID = setInterval(reqMonitorBuffer, 1000);
+let intervalID = setInterval(reqMonitorBuffer, 500);
 
 function toUTF8Array(str) {
     var utf8 = [];

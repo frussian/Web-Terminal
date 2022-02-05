@@ -23,15 +23,6 @@
 static int start_server(int);
 static int respond(int);
 
-// Client request
-char *method, // "GET" or "POST"
-        *uri,     // "/index.html" things before '?'
-        *qs,      // "a=1&b=2" things after  '?'
-        *prot,    // "HTTP/1.1"
-        *payload; // for POST
-
-int payload_size;
-
 static header_t reqhdr[17] = {{"\0", "\0"}};
 static int header_num = 0;
 
@@ -286,13 +277,13 @@ int respond(int fd) {
     } else { // message received
         buf[rcvd] = '\0';
 
-        method = strtok(buf, " \t\r\n");
-        uri = strtok(NULL, " \t");
-        prot = strtok(NULL, " \t\r\n");
+        char *method = strtok(buf, " \t\r\n");
+        char *uri = strtok(NULL, " \t");
+        char *prot = strtok(NULL, " \t\r\n");
 
         uri_unescape(uri);
 
-        qs = strchr(uri, '?');
+        char *qs = strchr(uri, '?');
         if (qs) {
             *qs++ = '\0'; // split URI
         }
@@ -322,8 +313,8 @@ int respond(int fd) {
 
         t = strtok(NULL, "\r\n"); // now the *t shall be the beginning of user payload
         t2 = request_header("Content-Length"); // and the related header if there is
-        payload = t;
-        payload_size = t2 ? atol(t2) : (rcvd - (t - buf));
+        char *payload = t;
+        int payload_size = t2 ? atol(t2) : (rcvd - (t - buf));
         if (payload != NULL) {
             /*fprintf(stderr, "string: %s\n", payload);
             fprintf(stderr, "code: %d\n", *payload);
