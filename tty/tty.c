@@ -146,9 +146,10 @@ struct tty start_terminal(struct tty_settings settings) {
         close(slave);
 
         setsid();
-
-        ioctl(STDIN_FILENO, TIOCSCTTY, 1); //1
-
+	    
+#ifdef TIOCSTTY
+        ioctl(STDIN_FILENO, TIOCSCTTY, 0);
+#endif
         if (settings.terminal) {
             setenv("TERM", settings.terminal, 1);
         }
