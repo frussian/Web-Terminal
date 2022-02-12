@@ -147,7 +147,7 @@ struct tty start_terminal(struct tty_settings settings) {
 
         setsid();
 	    
-#ifdef TIOCSTTY
+#ifdef TIOCSCTTY
         ioctl(STDIN_FILENO, TIOCSCTTY, 0);
 #endif
         if (settings.terminal) {
