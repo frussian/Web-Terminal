@@ -76,7 +76,7 @@ struct tty start_terminal(struct tty_settings settings) {
     pt.size = 0;
     pt.rawStart = 0;
 
-    int res = init_editor(&pt.ed);
+    int res = init_editor(&pt.ed, settings.rows, settings.cols);
     if (res < 0) {
         fprintf(stderr, "cannot initialize editor\n");
         exit(1);
@@ -135,6 +135,11 @@ struct tty start_terminal(struct tty_settings settings) {
         terminalCfg.c_lflag &= ~ECHOCTL;
         terminalCfg.c_lflag |= ECHOE;
         tcsetattr(slave, TCSANOW, &terminalCfg);
+
+	struct winsize win_size;
+	win_size.ws_row = settings.rows;
+	win_size.ws_col = settings.cols;
+	ioctl(slave, TIOCSWINSZ, &win_size);
 
         close(STDIN_FILENO);
         close(STDOUT_FILENO);

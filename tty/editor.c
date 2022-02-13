@@ -48,9 +48,9 @@ int init_screen(size_t rows_num, size_t cols_num, struct screen *scr) {
     return -1;
 }
 
-int init_editor(struct editor *ed) {
-    ed->rows_num = 24;
-    ed->cols_num = 80;
+int init_editor(struct editor *ed, size_t rows, size_t cols) {
+    ed->rows_num = rows;
+    ed->cols_num = cols;
     int res = init_screen(ed->rows_num, ed->cols_num, &ed->screens[0]);
     if (res < 0) {
         return res;

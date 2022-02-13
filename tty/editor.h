@@ -30,7 +30,7 @@ struct editor {
     int pending_wrap;
 };
 
-int init_editor(struct editor *ed);
+int init_editor(struct editor *ed, size_t rows, size_t cols);
 void free_editor(struct editor *ed);
 void add_char(struct editor *ed, struct character c);
 char *get_html(struct editor *ed, int *len);

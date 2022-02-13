@@ -24,6 +24,8 @@ struct tty {
 
 struct tty_settings {
     char *terminal;
+    size_t rows;
+    size_t cols;
 };
 
 struct tty start_terminal(struct tty_settings settings);

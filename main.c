@@ -14,6 +14,8 @@ static struct tty pt;
 int main(int c, char** v) {
     struct tty_settings settings;
     settings.terminal = "xterm-256color";
+    settings.rows = 43;
+    settings.cols = 132;
 
     pt = start_terminal(settings);
     if (pt.master < 0) return -1;
