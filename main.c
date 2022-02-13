@@ -70,7 +70,7 @@ int route(struct request req) {
         }
         if (req.payload != NULL) {
             if (strcmp("newline", req.payload) == 0) {
-                write_terminal("\n", 1, pt);
+                write_terminal("\r", 1, pt);
             } else {
                 write_terminal(req.payload, req.payload_size, pt);
             }
