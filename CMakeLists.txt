@@ -16,3 +16,10 @@ include_directories(WebTerminal
         tools
 )
 add_executable(WebTerminal ${SOURCE_FILES})
+
+add_executable(tests esc_parser/tests.c esc_parser/esc_parser.c tools/tools.c)
+include_directories(WebTerminal
+        PUBLIC
+        esc_parser
+        tools
+)

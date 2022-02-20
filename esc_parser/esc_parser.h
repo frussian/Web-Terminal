@@ -70,7 +70,7 @@ struct moveCursor {
 
 struct character {
     char c[4];
-    size_t size;    //TODO: for utf
+    size_t size;
     struct style s;
 };
 
