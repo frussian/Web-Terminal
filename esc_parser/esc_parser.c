@@ -78,7 +78,7 @@ void parse_esc(struct esc_parser *pars, char c) {
             }
             break;
         }
-        case 0: {
+        case 0: {  //CSI
             if (c == 'J') {
                 pars->res.code = ERASE_CUR_TO_END;
                 pars->ended = 1;
@@ -522,7 +522,7 @@ void parse_esc(struct esc_parser *pars, char c) {
                     pars->ended = 1;
                     break;
                 }
-                
+
                 switch (code) {
                     case 47:
                     case 1047:
@@ -580,7 +580,7 @@ void parse_esc(struct esc_parser *pars, char c) {
 
             break;
         }
-        //operating system commands
+        //operating system commands - OSC
         case 6: {
             if (pars->res.code != ERROR) {
                 if (c == ';') {
